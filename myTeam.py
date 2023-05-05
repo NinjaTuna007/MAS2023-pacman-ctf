@@ -227,6 +227,8 @@ class Terminator5000(OffensiveReflexAgent):
     self.defendFood = CaptureAgent.getFoodYouAreDefending(self, gameState)
     # if self.teamRed: # i am red
 
+    self.start = gameState.getAgentPosition(self.index)
+
 
   def distance2EnemyGhost(self, gameState, action):
     features = util.Counter()
@@ -280,6 +282,10 @@ class Terminator5000(OffensiveReflexAgent):
 
 
 class NodeTree:
+  """
+  NodeTree class for alpha beta pruning
+  """
+
   def __init__(self):
     self._heuristicValue = np.inf
     self._children = [] # list of children
@@ -302,6 +308,15 @@ class NodeTree:
     returns list of the children of node
     """
     return self._children
+  
+  # compute heuristic value of node
+  def ComputeHeuristicValue(self):
+    """
+    compute heuristic value of node
+    """
+    # TODO: implement heuristic value computation
+    pass
+
 
 
 def AlphaBeta(node:NodeTree, depth:int, alpha, beta, maximizingPlayer: bool):

@@ -617,7 +617,7 @@ class Game:
         while not self.gameOver:
             # Fetch the next agent
             agent = self.agents[agentIndex]
-            move_time = 0
+            move_time = 1
             skip_action = False
             # Generate an observation of the state
             if 'observationFunction' in dir( agent ):
