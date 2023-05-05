@@ -31,6 +31,8 @@ from util import nearestPoint
 # Team creation #
 #################
 
+# def createTeam(firstIndex, secondIndex, isRed,
+#                first = 'OffensiveReflexAgent', second = 'DefensiveReflexAgent'):
 def createTeam(firstIndex, secondIndex, isRed,
                first = 'OffensiveReflexAgent', second = 'DefensiveReflexAgent'):
   """
@@ -74,23 +76,42 @@ class ReflexCaptureAgent(CaptureAgent):
     # print('eval time for agent %d: %.4f' % (self.index, time.time() - start))
 
     maxValue = max(values)
-    bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+
+    # handles if there are mutliple actions of equal value
+    bestActions = [a for a, v in zip(actions, values) if v == maxValue] 
 
     foodLeft = len(self.getFood(gameState).asList())
 
+    # if food left is less/equal to 2: return home, then we win
     if foodLeft <= 2:
       bestDist = 9999
       for action in actions:
-        successor = self.getSuccessor(gameState, action)
+        # finds next position if do 'action', i.e. position after move according to action'
+        successor = self.getSuccessor(gameState, action) 
+        
+        # position after action position
         pos2 = successor.getAgentPosition(self.index)
+        # self.debugDraw(pos2, [180.0, 180.0, 140.0])
+
+        # distance between current pos and position after 'action' 
         dist = self.getMazeDistance(self.start,pos2)
+
+        # best action is action of shortest path (in this class, can be done differently)
         if dist < bestDist:
           bestAction = action
           bestDist = dist
+
       return bestAction
 
+    for action in actions:
+      # position after action position
+      successor = self.getSuccessor(gameState, action) 
+      pos2 = successor.getAgentPosition(self.index)
+      self.debugDraw(pos2, [180.0, 180.0, 140.0], True)
+    # multiple actions in which value = bestValue, choose one at random
     return random.choice(bestActions)
 
+  # successor if new position after executing 'action'
   def getSuccessor(self, gameState, action):
     """
     Finds the next successor which is a grid position (location tuple).
