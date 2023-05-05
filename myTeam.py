@@ -556,9 +556,6 @@ class OffensiveReflexAgent(ParticlesCTFAgent):
 
 
 
-        aPosition = self.getEnemyPositions(self.a)
-        bPosition = self.getEnemyPositions(self.b)
-        hypotheticalState = gameState.deepCopy()
 
         if self.getMazeDistance(aPosition,
                                 pacmanPosition) <= 5:  # and self.getBeliefDistribution(self.a)[aPosition] > 0.5:
@@ -925,29 +922,30 @@ class DummyAgent(CaptureAgent):
 #     agent to populate useful fields (such as what team
 #     we're on).
 
-#     A distanceCalculator instance caches the maze distances
-#     between each pair of positions, so your agents can use:
-#     self.distancer.getDistance(p1, p2)
+class NodeTree:
+  def __init__(self):
+    self._heuristicValue = np.inf
+    self._children = [] # list of children
 
-#     IMPORTANT: This method may run for at most 15 seconds.
-#     """
+  def IsTerminal(self):
+    """
+    Check if children list is empty,
+    If no children then is a terminal node
+    """
+    return ( len(self._children) ==0 )
+  
+  def ReturnHeuristicValue(self):
+    """
+    returns heuristic value of node
+    """
+    return self._heuristicValue
+  
+  def ReturnChildren(self):
+    """
+    returns list of the children of node
+    """
+    return self._children
 
-#     '''
-#     Make sure you do not delete the following line. If you would like to
-#     use Manhattan distances instead of maze distances in order to save
-#     on initialization time, please take a look at
-#     CaptureAgent.registerInitialState in captureAgents.py.
-#     '''
-#     CaptureAgent.registerInitialState(self, gameState)
-
-#     '''
-#     Your initialization code goes here, if you need any.
-#     '''
-
-#     # bool: if on read team then true, if false then player is on blue team
-#     self.teamRed = gameState.isOnRedTeam(self.index) 
-#     #self.walls = gameState.data.layout.walls
-#     self.walls = gameState.getWalls()
 
 #     print("walls")
 #     print(self.walls)
