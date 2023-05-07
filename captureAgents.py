@@ -194,6 +194,7 @@ class CaptureAgent(Agent):
       return gameState.getBlueFood()
 
   def getCapsules(self, gameState):
+    """gives capsules you want to eat"""
     if self.red:
       return gameState.getBlueCapsules()
     else:
