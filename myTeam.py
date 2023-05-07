@@ -29,7 +29,7 @@ from baselineTeam import OffensiveReflexAgent
 # def createTeam(firstIndex, secondIndex, isRed,
 #                first = 'DummyAgent', second = 'DummyAgent'):
 def createTeam(firstIndex, secondIndex, isRed,
-               first = 'HybridAgent', second = 'Terminator5000'):
+               first = 'HybridAgent', second = 'HybridAgent'):
   """
   This function should return a list of two agents that will form the
   team, initialized using firstIndex and secondIndex as their agent
@@ -274,7 +274,7 @@ class HybridAgent( OffensiveReflexAgent):
         
         self.canEatCount = self.GetEatCount(gameState)
         print(self.canEatCount)
-        self.foodThreshold = int( (self.canEatCount-2)/4 )
+        self.foodThreshold = int( (self.canEatCount-2)/5 )
 
         print("[time] registerInitialState: "+ str(time.time()-startTime_registerInitialState))
 
@@ -353,17 +353,87 @@ class HybridAgent( OffensiveReflexAgent):
         #     dists = [self.getMazeDistance(myPos, a.getPosition()) for a in invaders]
         #     features['exactEnemyDistance'] = min(dists)
 
-        # check amount of food being carried by enemy team
-        # enemy_food_carried = sum([gameState.getAgentState(i).numCarrying for i in self.getOpponents(gameState)])
-        # features['foodEaten'] = enemy_food_carried
         
 
+        # check if stop or reverse
+        if action == Directions.STOP: features['stop'] = 1
+        rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
+        if action == rev: features['reverse'] = 1  
 
+        # check how much food each enemy has eaten
+        for enemy in invaders:
+            enemy_food_carried = enemy.numCarrying
+            features['foodEaten'] = enemy_food_carried
 
         return features
 
+    def evaluate(self, gameState, action):
+        """
+        Computes a linear combination of features and feature weights
+        """
+        features = self.getFeatures(gameState, action)
 
-    def getWeightsDefensive():
+        # weights is getWeightsOffensive if features['onDefence'] == 0 , getWeightsDefensive if features['onDefence'] == 1 and getWeightsReturnHome if above threshold
+        if features['onDefence'] == 0 and features['foodEaten'] < self.foodThreshold:
+            weights = self.getWeightsOffensive()
+        elif features['onDefence'] == 1 :
+            weights = self.getWeightsDefensive()
+        else:
+            weights = self.getWeightsReturnHome()
+
+        # call on CheckIfEnemyInMyTerritory, if true then call on findenemyinmyterritory, penalize going away from enemy
+        # if self.CheckIfEnemyInMyTerritory(gameState):
+        #     # find enemy in my territory, penalize going away from enemy
+        #     enemyPos = self.FindEnemyInMyTerritory(gameState)
+        #     if(enemyPos != None):
+        #         # my position is my current position
+        #         myPos = gameState.getAgentPosition(self.index)
+        #         print("enemy pos is "+ str(enemyPos))
+        #         print("my pos is "+ str(myPos))
+        #         features['exactEnemyDistance'] = self.getMazeDistance(myPos, enemyPos)
+
+
+        return features * weights
+
+    def CheckIfEnemyInMyTerritory(self, gameState)->bool:
+        """checks if enemy is in my territory"""
+        enemies = [gameState.getAgentState(i) for i in self.getOpponents(gameState)]
+        invaders = [a for a in enemies if a.isPacman and a.getPosition() != None]
+        if len(invaders) > 0:
+            return True
+        else:
+           #check if old food count is same as current food count
+            currentFoodCount = GetFoodCount(CaptureAgent.getFoodYouAreDefending(self, gameState))
+            if currentFoodCount < self.foodCountBeforeEnemyAttack:
+                # self.foodCountBeforeEnemyAttack = currentFoodCount
+                return True
+            else:
+                return False
+
+    def FindEnemyInMyTerritory(self, gameState)->Tuple[int]:
+        """finds enemy in my territory by comparing old food count with current food count"""
+        # todo: check why this function is not working
+       # check if old food count is same as current food count
+       # if different check where food is missing
+        currentFoodCount = GetFoodCount(CaptureAgent.getFoodYouAreDefending(self, gameState))
+        if currentFoodCount < self.foodCountBeforeEnemyAttack:
+            print("food count before enemy attack is "+ str(self.foodCountBeforeEnemyAttack) + " current food count is "+ str(currentFoodCount))
+            self.foodCountBeforeEnemyAttack = currentFoodCount
+            # find where food is missing
+
+            print("self.defendfood dimensions are "+ str(self.defendFood.height) + " " + str(self.defendFood.width))
+
+            for row in range(self.defendFood.height):
+                for col in range(self.defendFood.width):
+                    print("row "+ str(row) + " col "+ str(col))
+                    print("self defendfood "+ str(self.defendFood[row][col]))
+                    print(str(gameState.hasFood(row, col)))
+                    if self.defendFood[row][col] and not gameState.hasFood(row, col):
+                        self.defendFood = gameState.getAgentState(self.index).getFoodYouAreDefending()
+                        
+                        return tuple(row,col)
+
+    def getWeightsDefensive(self):
         """interpetation:
             numberOfInvaders: punish for number of invaders
             onDefense: give reward for defending home
@@ -374,12 +444,13 @@ class HybridAgent( OffensiveReflexAgent):
             fuzzyEnemyDistanceScaredGhost: know enemy distanse with noise, but our ghost is scared
             foodEaten: prioritize enemy that has eaten more food, if more than one enemy attacking
             distance2FoodCapsule: penalize increased distance to foodcapsule, i.e. defend capsules so don't get scared
+            reverse: penalize going backwards 
         """
         return {'numberOfInvaders': -1000, 'onDefense': 100, 'stop':-100 , 'fuzzyEnemyDistance': -30, 'exactEnemyDistance': -4,
-              'exactEnemyDistanceScaredGhost': -1000, 'fuzzyEnemyDistanceScaredGhost': -200, 'foodEaten': -20, 
-              'distance2FoodCapsule': -10}
+              'exactEnemyDistanceScaredGhost': -1000, 'fuzzyEnemyDistanceScaredGhost': -400, 'foodEaten': -20, 
+              'distance2FoodCapsule': -5, 'reverse': -2}
     
-    def getWeightsOffensive():
+    def getWeightsOffensive(self):
         """interpetation:
             foodScore: give reward for more score in food
             distance2food: penalize going further away from food
@@ -396,7 +467,7 @@ class HybridAgent( OffensiveReflexAgent):
                 'minEnemyDistanceExact': -100, 'minEnemyDistanceFuzzyScared': 5, 'minEnemyDistanceExactScared': 20, 'stop': -100, 
                 'secondEnemyDist': -10}
     
-    def getWeightsReturnHome():
+    def getWeightsReturnHome(self):
         """interpetation: 
             distance2Home: penalize higher distance to home
             distance2capsule: penalize further distance to capsule, if capsule is nearby
