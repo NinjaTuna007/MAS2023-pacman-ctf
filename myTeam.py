@@ -13,10 +13,15 @@
 
 
 from captureAgents import CaptureAgent
-import random, time, util
 from game import Directions
 import game
 import math
+import time
+
+import distanceCalculator
+import random, time, util, sys
+from util import nearestPoint
+
 
 #################
 # Team creation #
@@ -78,129 +83,348 @@ class DummyAgent(CaptureAgent):
     Your initialization code goes here, if you need any.
     '''
 
+  def getSuccessor(self, gameState, action):
+    """
+    Finds the next successor which is a grid position (location tuple).
+    """
+    successor = gameState.generateSuccessor(self.index, action)
+    pos = successor.getAgentState(self.index).getPosition()
+    if pos != nearestPoint(pos):
+      # Only half a grid position was covered
+      return successor.generateSuccessor(self.index, action)
+    else:
+      return successor
+
+  def getFeatures(self, gameState, action):
+    features = util.Counter()
+    successor = self.getSuccessor(gameState, action)
+    foodList = self.getFood(successor).asList()    
+    features['successorScore'] = -len(foodList)#self.getScore(successor)
+
+    # Compute distance to the nearest food
+
+    if len(foodList) > 0: # This should always be True,  but better safe than sorry
+      myPos = successor.getAgentState(self.index).getPosition()
+      minDistance = min([self.getMazeDistance(myPos, food) for food in foodList])
+      features['distanceToFood'] = minDistance
+    return features
+
+  def getWeights(self, gameState, action):
+    return {'successorScore': 100, 'distanceToFood': -1}
+
   # evaluation function
-  def evaluationFunction(self, gameState):
+  def evaluationFunction(self, gameState, mode = "Attack"):
     # heuristic function to evaluate the state of the game
 
     # if terminal state    
     if gameState.isOver():
       return gameState.getScore()
     
-    if False:
-      # if pacman is eaten: seen by spawning at the start
-      if gameState.getAgentState(self.index).isPacman and gameState.getAgentState(self.index).configuration.pos == gameState.getInitialAgentPosition(self.index):
-        return -math.inf
-      
-      # if pacman eats a food
-      if gameState.getAgentState(self.index).numCarrying > 0:
-        return math.inf
-      
-      # if pacman is close to a food
-      foodList = self.getFood(gameState).asList()
-      minFoodDistance = min([self.getMazeDistance(gameState.getAgentPosition(self.index), food) for food in foodList])
-      if minFoodDistance < 3:
-        return 1/minFoodDistance
-      
-      # if pacman is close to a ghost
-      ghostList = [gameState.getAgentPosition(i) for i in self.getOpponents(gameState) if not gameState.getAgentState(i).isPacman]
-      # filter out ghosts that are not visible
-      ghostList = [ghost for ghost in ghostList if ghost!=None]
+    # new heuristic function
 
-      if any(ghostList):
-        minGhostDistance = min([self.getMazeDistance(gameState.getAgentPosition(self.index), ghost) for ghost in ghostList])
-        if minGhostDistance < 3:
-          return -1/minGhostDistance
+    val = 0
+    actions = gameState.getLegalActions(self.index)
+    actions.remove(Directions.STOP)
+    # print("actions = ", actions)
+
+    for action in actions:
+      features = self.getFeatures(gameState, action)
+      weights = self.getWeights(gameState, action)
       
-      # if pacman is close to a capsule
-      capsuleList = self.getCapsules(gameState)
-      minCapsuleDistance = min([self.getMazeDistance(gameState.getAgentPosition(self.index), capsule) for capsule in capsuleList])
-      if minCapsuleDistance < 3:
-        return 1/minCapsuleDistance
-      
-      return 0
+      val += features * weights
+
+    return val/len(actions)
+
+
+    # list of our food, enemy food, enemy pacman, enemy ghost, our pacman, our ghost, capsule
+    foodList = self.getFood(gameState).asList()
+    enemyFoodList = self.getFoodYouAreDefending(gameState).asList()
+    
+    enemyPacmanList = [gameState.getAgentPosition(i) for i in self.getOpponents(gameState) if gameState.getAgentState(i).isPacman and gameState.getAgentPosition(i)!=None]
+
+    enemyGhostList = [gameState.getAgentPosition(i) for i in self.getOpponents(gameState) if not gameState.getAgentState(i).isPacman and gameState.getAgentPosition(i)!=None]
+    
+    ourPacmanList = [gameState.getAgentPosition(i) for i in self.getTeam(gameState) if gameState.getAgentState(i).isPacman]
+    ourPacmanList = [pacman for pacman in ourPacmanList if pacman!=None]
+
+    ourGhostList = [gameState.getAgentPosition(i) for i in self.getTeam(gameState) if not gameState.getAgentState(i).isPacman]
+    ourGhostList = [ghost for ghost in ourGhostList if ghost!=None]
+    
+    capsuleList = self.getCapsules(gameState)
+
+    # find number of moves remaining in the game (max 400)
+    movesRemaining = gameState.data.timeleft // 4
+    # print(movesRemaining)
+
+    # if terminal state
+    if gameState.isOver():
+      return gameState.getScore()
+    
+    # check if agent is pacman
+    is_pac = gameState.getAgentState(self.index).isPacman
+    # is_pac == True if agent is pacman, False if agent is ghost
+
+    # check amount of food being carried by our team
+    team_food_carried = sum([gameState.getAgentState(i).numCarrying for i in self.getTeam(gameState)])
+    # print("team_food_carried = ", team_food_carried)
+    # check amount of food being carried by enemy team
+    enemy_food_carried = sum([gameState.getAgentState(i).numCarrying for i in self.getOpponents(gameState)])
+    # print("enemy_food_carried = ", enemy_food_carried)
+
+    # get distance to grid center
+    gridCenter = (gameState.data.layout.width // 2, gameState.data.layout.height // 2)
+
+    dist_to_grid_center = self.getMazeDistance(gameState.getAgentPosition(self.index), gridCenter)
+
+    if dist_to_grid_center > gameState.data.layout.width // 3:
+      push_to_center = 100 / dist_to_grid_center # closer to center = higher score
       
     else:
-      # new heuristic function
-      # list of our food, enemy food, enemy pacman, enemy ghost, our pacman, our ghost, capsule
-      foodList = self.getFood(gameState).asList()
-      enemyFoodList = self.getFoodYouAreDefending(gameState).asList()
-      enemyPacmanList = [gameState.getAgentPosition(i) for i in self.getOpponents(gameState) if gameState.getAgentState(i).isPacman]
-      enemyGhostList = [gameState.getAgentPosition(i) for i in self.getOpponents(gameState) if not gameState.getAgentState(i).isPacman]
-      enemyGhostList = [ghost for ghost in enemyGhostList if ghost!=None]
-      ourPacmanList = [gameState.getAgentPosition(i) for i in self.getTeam(gameState) if gameState.getAgentState(i).isPacman]
-      ourGhostList = [gameState.getAgentPosition(i) for i in self.getTeam(gameState) if not gameState.getAgentState(i).isPacman]
-      ourGhostList = [ghost for ghost in ourGhostList if ghost!=None]
-      capsuleList = self.getCapsules(gameState)
+      push_to_center = 0
 
-      # if terminal state
-      if gameState.isOver():
-        return gameState.getScore()
-      
-      
-      
+    pac_ghost_score = 0
+
+    # if agent is pacman
+    if is_pac:
+      # prioritize eating food
+      if len(foodList) > 2:
+        min_food_dist = min([self.getMazeDistance(gameState.getAgentPosition(self.index), food) for food in foodList])
+        pac_ghost_score += 1000 / min_food_dist
+
+      # prioritize returning food to our side if ghost is nearby or we are carrying a lot of food
+      if len(enemyGhostList) > 0 or team_food_carried > 10:
+        # push to starting position
+        pac_ghost_score += 1000 / self.getMazeDistance(gameState.getAgentPosition(self.index), gameState.getInitialAgentPosition(self.index))
 
 
-      return 0
+      # prioritize eating capsules
+      if len(capsuleList) > 0:
+        min_capsule_dist = min([self.getMazeDistance(gameState.getAgentPosition(self.index), capsule) for capsule in capsuleList])
+        pac_ghost_score += 1 / min_capsule_dist
+
+      # prioritize eating enemy ghosts
+      if len(enemyGhostList) > 0:
+        # check if enemy ghost is scared
+        if gameState.getAgentState(self.getOpponents(gameState)[0]).scaredTimer > 0:
+          min_ghost_dist = min([self.getMazeDistance(gameState.getAgentPosition(self.index), ghost) for ghost in enemyGhostList])
+          pac_ghost_score += 100 / min_ghost_dist
+
+
+    # if agent is ghost
+    else:
+      
+      # if we carry no food, push to opposite side
+      if False and team_food_carried == 0:
+        pac_ghost_score += 10 / (self.getMazeDistance(gameState.getAgentPosition(self.index), gameState.getInitialAgentPosition(self.index)) + 1)
+
+
+      # prioritize eating enemy pacman
+      if len(enemyPacmanList) > 0:
+        min_pacman_dist = min([self.getMazeDistance(gameState.getAgentPosition(self.index), pacman) for pacman in enemyPacmanList])
+        # check if we are scared
+        if gameState.getAgentState(self.index).scaredTimer > 0:
+          pac_ghost_score -= 100 / min_pacman_dist
+        else:
+          # pac_ghost_score += 100 / min_pacman_dist
+          pass 
+
+        # move towards central food if we are not scared
+        if len(enemyFoodList) > 0:
+          min_food_dist = min([self.getMazeDistance(gridCenter, food) for food in enemyFoodList])
+          pac_ghost_score += 5 / min_food_dist
+      
+
+
+
+
+    
+
+    return gameState.getScore() + 0.5*(team_food_carried - enemy_food_carried) + (push_to_center) + pac_ghost_score 
 
     
 
   # setup for minimax
-  def getSuccessors(self, gameState):
+  def getSuccessors(self, gameState, player_ID):
     """
     Returns successor states, the actions they require, and a cost of 1.
-
     The following successor states are the same board, but the agent
     has been moved one step in the specified direction.
 
     """
+
+    # print("self.index = ", self.index)
+    # print("player_ID = ", player_ID)
+
     successors = []
-    for action in gameState.getLegalActions(self.index):
+    for action in gameState.getLegalActions(agentIndex = player_ID):
       # Ignore illegal actions
-      if action == Directions.STOP:
+      if False and (action == Directions.STOP): # avoid staying put
         continue
-      successor = gameState.generateSuccessor(self.index, action)
+
+      successor = gameState.generateSuccessor(player_ID, action)
       successors.append((successor, action))
     return successors
   
-  def max_agent(self, gameState, depth, time_left = math.inf, alpha = -math.inf, beta = math.inf):
-    if depth == 0 or time_left < 0.05:
-      return self.evaluationFunction(gameState)
+  def max_agent(self, gameState, agent_ID, depth, time_left = math.inf, alpha = -math.inf, beta = math.inf):
+    
+    if depth == 0:
+      return self.evaluationFunction(gameState), None
+    
+    if time_left < 0.05:
+      # scream not enough time
+      return -math.inf, None
+    
     v = -math.inf
-    for successor, action in self.getSuccessors(gameState):
+    best_action = None
+
+    start_time = time.time()
+
+    successor_list = self.getSuccessors(gameState, agent_ID)
+    # move ordering based on heuristic
+    successor_list.sort(key = lambda x: self.evaluationFunction(x[0]), reverse = True)
+
+    blue_team = gameState.getBlueTeamIndices()
+    red_team = gameState.getRedTeamIndices()
+
+    # find agent team based on agent_ID
+    if agent_ID in blue_team:
+      team = blue_team
+      opponent_team = red_team
+    else:
+      team = red_team
+      opponent_team = blue_team
+
+
+    for successor, action in successor_list:
+      
+      # check if time is up
+      current_time = time.time()
+      if current_time - start_time > time_left:
+        return v, best_action
+      else:
+        time_left = time_left - (current_time - start_time)
 
       # check if enemy is visible from the successor state
-      enemyList = [successor.getAgentPosition(i) for i in self.getOpponents(successor)]
-      if any(enemyList):
-        v = max(v, self.min_agent(successor, depth-1, time_left - 0.05, alpha, beta))
+      enemy_indices = opponent_team
+      enemyList = [successor.getAgentPosition(i) for i in opponent_team]
+      enemyList = [enemy for enemy in enemyList if enemy != None] 
       
+      enemy_conf = None
+
+      if any(enemyList):
+        # pick the closest enemy
+        enemy = min(enemyList, key = lambda x: self.getMazeDistance(successor.getAgentPosition(agent_ID), x))
+        
+        # find ID of closest enemy
+        enemy = enemy_indices[enemyList.index(enemy)]
+
+        # find conf of enemy
+        enemy_conf = successor.getAgentState(enemy).configuration
+        # print("enemy_conf = ", enemy_conf)
+        # print our agent's position
+        # print("our agent's position = ", successor.getAgentPosition(self.index))
+
+        # if enemy is visible, then assume enemy makes next move
+        # print("enemy (in max) = ", enemy)
+      if enemy_conf != None:
+        act_value,_ = self.min_agent(successor, enemy, depth-1, time_left, alpha, beta)
+
+        if act_value > v:
+          v = act_value
+          best_action = action
+        
       else:
         # if enemy is not visible, then assume board remains the same and make next move
-        v = max(v, self.max_agent(successor, depth - 1, time_left - 0.05, alpha, beta))
+        act_value,_ = self.max_agent(successor, agent_ID, depth-1, time_left, alpha, beta)
+
+        if act_value > v:
+          v = act_value
+          best_action = action
 
       if v >= beta:
-        return v
+        return v, best_action
       alpha = max(alpha, v)
-    return v
+    return v, best_action
   
-  def min_agent(self, gameState, depth, time_left = math.inf, alpha = -math.inf, beta = math.inf):
-    if depth == 0 or time_left < 0.05:
-      return self.evaluationFunction(gameState)
+  def min_agent(self, gameState, agent_ID, depth, time_left = math.inf, alpha = -math.inf, beta = math.inf):
+    if depth == 0:
+      return self.evaluationFunction(gameState), None
+    
+    if time_left < 0.05:
+      # scream not enough time
+      return math.inf, None
+    
     v = math.inf
-    for successor, action in self.getSuccessors(gameState):
+    best_action = None
+    
+    start_time = time.time()
+
+
+    successor_list = self.getSuccessors(gameState, agent_ID)
+    # move ordering based on heuristic
+    successor_list.sort(key = lambda x: self.evaluationFunction(x[0]), reverse = False) # reverse = False for min agent because we want to minimize the heuristic value - explore the least heuristic value first
+    
+    blue_team = gameState.getBlueTeamIndices()
+    red_team = gameState.getRedTeamIndices()
+
+    # find agent team based on agent_ID
+    if agent_ID in blue_team:
+      team = blue_team
+      opponent_team = red_team
+    else:
+      team = red_team
+      opponent_team = blue_team
+
+    for successor, action in successor_list:
+        
+        current_time = time.time()
+        if current_time - start_time > time_left - 0.05:
+          return v
+        else:
+          time_left = time_left - (current_time - start_time)
         
         # check if enemy is visible from the successor state
-        enemyList = [successor.getAgentPosition(i) for i in self.getOpponents(successor)]
+        enemy_indices = opponent_team
+        enemyList = [successor.getAgentPosition(i) for i in opponent_team]
+        enemyList = [enemy for enemy in enemyList if enemy != None]
+
+        enemy_conf = None
+
         if any(enemyList):
-          v = min(v, self.max_agent(successor, depth-1, time_left - 0.05, alpha, beta))
+          # pick the closest enemy
+          enemy = min(enemyList, key = lambda x: self.getMazeDistance(successor.getAgentPosition(self.index), x))
+          # if enemy is visible, then assume enemy makes next move
+
+          # find ID of closest enemy
+          enemy = enemy_indices[enemyList.index(enemy)]
+
+          # find conf of enemy
+          enemy_conf = successor.getAgentState(enemy).configuration
+          # print("enemy_conf = ", enemy_conf)
+          # print our agent's position
+          # print("our agent's position = ", successor.getAgentPosition(self.index))
+
+          # print("enemy (in min) = ", enemy)
+          
+        if enemy_conf != None:
+          act_value,_ = self.max_agent(successor, enemy, depth-1, time_left, alpha, beta)
+
+          if act_value < v:
+            v = act_value
+            best_action = action  
         
         else:
           # if enemy is not visible, then assume board remains the same and make next move
-          v = min(v, self.min_agent(successor, depth - 1, time_left - 0.05, alpha, beta))
+          act_value,_ = self.min_agent(successor, agent_ID, depth-1, time_left, alpha, beta)
+
+          if act_value < v:
+            v = act_value
+            best_action = action
   
         if v <= alpha:
-          return v
+          return v, best_action
         beta = min(beta, v)
-    return v
+    return v, best_action
   
   def chooseAction(self, gameState):
     """
@@ -212,17 +436,32 @@ class DummyAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    # minimax
-    depth = 5
-    time_left = 0.95 # time left for the agent to choose an action
-    best_action = None
-    best_score = -math.inf
-    for successor, action in self.getSuccessors(gameState):
-      score = self.min_agent(successor, depth, time_left - 0.05)
-      if score > best_score:
-        best_score = score
-        best_action = action
-    return best_action
-  
-    return random.choice(actions)
+    # depth_list = [4, 6, 8]
+    depth_list = [3] # no IDS for now
 
+    time_left = 0.95 # time left for the agent to choose an action
+
+    depth_act_dict = {}
+
+    # iteratively deepening search
+    start_time = time.time()
+
+    for depth in depth_list:
+      current_time = time.time()
+      if current_time - start_time > time_left:
+        break
+      
+      v, best_action = self.max_agent(gameState, self.index, depth, time_left)
+      if best_action != None:
+        depth_act_dict[depth] = best_action
+      else:
+        break
+
+    # print("depth_act_dict = ", depth_act_dict)
+    if depth_act_dict == {}:
+      return random.choice(actions)
+    else:
+      # choose action with highest depth
+      best_depth = max(depth_act_dict.keys())
+      best_action = depth_act_dict[best_depth]
+      return best_action    
