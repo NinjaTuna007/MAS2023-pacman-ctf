@@ -107,8 +107,8 @@ class ReflexCaptureAgent(CaptureAgent):
       # position after action position
       successor = self.getSuccessor(gameState, action) 
       pos2 = successor.getAgentPosition(self.index)
-      self.debugDraw(pos2, [180.0, 180.0, 140.0], True)
-      self.debugDraw(pos2, [180.0, 180.0, 140.0], True)
+      # self.debugDraw(pos2, [180.0, 180.0, 140.0], True)
+      # self.debugDraw(pos2, [180.0, 180.0, 140.0], True)
     # multiple actions in which value = bestValue, choose one at random
     return random.choice(bestActions)
 
