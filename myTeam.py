@@ -90,13 +90,7 @@ class DummyAgent(CaptureAgent):
     self.walls = gameState.getWalls()
 
     self.defendFood = CaptureAgent.getFoodYouAreDefending(self, gameState)
-    # if self.teamRed: # i am red
-    #   self.captureFood = gameState.getBlueFood() # food on the blue team's side
-    #   self.defendFood = gameState.getRedFood() # food on the red team's side
     
-    # else: # i am blue
-    #   self.captureFood = gameState.getRedFood()
-    #   self.defendFood = gameState.getBlueFood()
 
 
 
@@ -269,9 +263,6 @@ class HybridAgent( OffensiveReflexAgent):
 
         # initial roles setup in start, they start at different positions, set first one to defense,second to offense
 
-        # set a threshold to when pacman should return
-        # self.totalEnemyCapsules =  GetFoodCount(self.getCapsules(gameState) ) #  (self.getCapsules(gameState))
-        # self.food2Eat = self.getFood(gameState)
         
         self.canEatCount = self.GetEatCount(gameState)
         print(self.canEatCount)
@@ -404,12 +395,6 @@ class HybridAgent( OffensiveReflexAgent):
         # Computes distance to invaders we can see
         enemies = [successor.getAgentState(i) for i in self.getOpponents(successor)]
 
-        # check if I am pacman or ghost
-        # if self.role == "offense":
-        #   features = self.AssignOffencsiveFeatures(gameState, enemies,myPos, features)
-           
-        # else: # i am on defence 
-        #    features =  self.AssignDefensiveFeatures(gameState, enemies, myPos, features)
 
         # check if i am ghost and enemy is pacman and is near me
         if not myState.isPacman and myState.scaredTimer == 0 and len(enemies) > 0 and self.role == "offense":
@@ -534,12 +519,35 @@ class HybridAgent( OffensiveReflexAgent):
         features = self.getFeatures(gameState, action)
 
         # weights is getWeightsOffensive if features['onDefence'] == 0 , getWeightsDefensive if features['onDefence'] == 1 and getWeightsReturnHome if above threshold
-        if features['onDefence'] == 0 and features['foodEaten'] < self.foodThreshold:
-            weights = self.getWeightsOffensive()
-        elif features['onDefence'] == 1 :
-            weights = self.getWeightsDefensive()
+        # if features['onDefence'] == 0 and features['foodEaten'] < self.foodThreshold:
+        #     weights = self.getWeightsOffensive()
+        # elif features['onDefence'] == 1 :
+        #     weights = self.getWeightsDefensive()
+        # else:
+        #     weights = self.getWeightsReturnHome()
+
+        successor = self.getSuccessor(gameState, action)
+        myState = successor.getAgentState(self.index)
+        myPos = myState.getPosition()
+        enemies = [successor.getAgentState(i) for i in self.getOpponents(successor)]
+
+
+        features = self.getFeatures(gameState, action)
+        # weights = self.getWeights(gameState, action)
+
+        # check if i am ghost and enemy is pacman and is near me
+        if not myState.isPacman and myState.scaredTimer == 0 and len(enemies) > 0 and self.role == "offense":
+          weights = self.getWeightsDefensive()
+        # I am offensive agent, no pacman near me, i go eat food
+        elif self.role == "offense": 
+          weights = self.getWeightsOffensive()
         else:
-            weights = self.getWeightsReturnHome()
+          weights = self.getWeightsDefensive()
+
+
+
+
+
 
         # if pacman check closest food, penalize being away from it
         # am i pacman?
@@ -656,6 +664,10 @@ class HybridAgent( OffensiveReflexAgent):
                 'minEnemyDistanceFuzzyScared': 50, 'minEnemyDistanceExactScared': 200, 'stop': -200, 'onRoute': 30, 'reverse': -2}
         
     
+
+
+
+
     def ReturnWeights(self, gameState):
       """returns weights for the given role"""
       

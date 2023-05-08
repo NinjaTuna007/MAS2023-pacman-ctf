@@ -21,6 +21,9 @@ import time
 import distanceCalculator
 import random, time, util, sys
 from util import nearestPoint
+from typing import List, Tuple
+import numpy as np
+from baselineTeam import OffensiveReflexAgent
 
 
 #################
@@ -83,62 +86,191 @@ class DummyAgent(CaptureAgent):
     Your initialization code goes here, if you need any.
     '''
 
-  def getSuccessor(self, gameState, action):
-    """
-    Finds the next successor which is a grid position (location tuple).
-    """
-    successor = gameState.generateSuccessor(self.index, action)
-    pos = successor.getAgentState(self.index).getPosition()
-    if pos != nearestPoint(pos):
-      # Only half a grid position was covered
-      return successor.generateSuccessor(self.index, action)
-    else:
-      return successor
+    self.start = gameState.getAgentPosition(self.index)
+    startTime_registerInitialState = time.time()
+    # bool: if on read team then true, if false then player is on blue team
+    self.teamRed = gameState.isOnRedTeam(self.index)
+    
+    
+    # bool for pacman to return home
+    self.PacRetrun = False
+    
+    # get the game walls
+    self.walls = gameState.getWalls()
+    # food i'm defending, in form of a matrix where m[x][y]=true if there is food at (x,y) that your opponent can eat
+    self.defendFood = CaptureAgent.getFoodYouAreDefending(self, gameState)
+    # memory matrix of where food was before enemy attack, to be used to find out where enemies are
+    self.foodBeforeAttack = CaptureAgent.getFoodYouAreDefending(self, gameState)
+    # startTime = time.time()
+    initialFoodCount = GetFoodCount(self.defendFood)
+    # elapsedTime = time.time() - startTime
+    self.originalNumberOfFood = initialFoodCount
+    self.foodCountBeforeEnemyAttack = initialFoodCount
+    
+    print("number of foodcapsules are "+ str(self.originalNumberOfFood))
+    # initial roles setup in start, they start at different positions, set first one to defense,second to offens
+    
+    self.canEatCount = self.GetEatCount(gameState)
+    print(self.canEatCount)
+    self.foodThreshold = int( (self.canEatCount-2)/5 )
+    # print initial position of agents
+    print("[id]"+str(self.index)+"initial position of agents"+ str(gameState.getAgentPosition(self.index)))
+    
+    # assign roles, no particular reason for this order, they are essentially in same position
+    self.AssignRoles(gameState)
+    print("[time] registerInitialState: "+ str(time.time()-startTime_registerInitialState))
 
-  def getFeatures(self, gameState, action):
-      
-        features = util.Counter()
 
-        successor = self.getSuccessor(gameState, action)
 
-        #--- info of my state----
+
+
+
+
+
+
+  # function that assigns roles to agents
+  def AssignRoles(self, gameState):
+      """assigns roles to agents"""
+      if self.index == self.getTeam(gameState)[0]:
+          self.role = "defense"
+      else:
+          self.role = "offense"
+      print("agent "+ str(self.index) + " role is " + self.role)
+      pass
+
+
+
+  def FindClosest2Eat(self, gameState):
+        """finds closest food or capsule to me to aim towards"""
+        capsules = self.getCapsules(gameState) # list of tuples
+        food = self.getFood(gameState) #grid where m[x][y]=true if there is food at (x,y)
+
+        closestCapsuleDist = np.inf
+        closestCapsule = None
+        # check so capsule list is not empty
+        if len(capsules) > 0:
+          # check all capsule tuples in list of capsules, save shortest distance to myPos
+          for capsule in capsules:
+            capsuleDist = self.getMazeDistance(gameState.getAgentPosition(self.index), capsule)
+            if capsuleDist < closestCapsuleDist:
+              closestCapsuleDist = capsuleDist
+              closestCapsule = capsule
+              # closestCapsule = min( closestCapsule, self.getMazeDistance(gameState.getAgentPosition(self.index), capsule) )
+
+
+        # print("food"+ str(food))
+        # print("  ")
+        # print("capsules"+ str(capsules))
+
         
-        # my new state/position after executing given action
-        myState = successor.getAgentState(self.index)
-        myPos = myState.getPosition()
+        # if food is closer than capsule, then return food, else return capsule
+        
+        # loop through food, remember closest food
+        closestFood = self.FindClosestFood(gameState, food)
+        print("closest food is "+ str(closestFood))
+        
+        print("closest capsule is "+ str(closestCapsule))
 
-        eatenFood = gameState.getAgentState(self.index).numCarrying
+        myPos = gameState.getAgentPosition(self.index)
 
-        # enemy capsules want to eat
-        enemyCapsules = self.getCapsules(gameState)
-        enemyCapsulesInt = len(enemyCapsules)
-        #-------------
+        if closestCapsule != None and closestFood != myPos: # there exist a capsule, and there is still food to eat
+          if self.getMazeDistance(myPos, closestFood) < self.getMazeDistance(myPos, closestCapsule):
+              return closestFood
+          else:
+              return closestCapsule
+        elif closestCapsule == None and closestFood != myPos: # there is no capsule, but there is still food to eat
+          return closestFood  
+        else: return None # there is no food to eat, return None
 
-        # check if I am pacman or ghost
-        if myState.isPacman: features['onDefence'] = 0
-        else: features['onDefence'] = 1
 
-        # Computes distance to invaders we can see
-        enemies = [successor.getAgentState(i) for i in self.getOpponents(successor)]
+
+  def FindClosestFood(self, gameState, matrix:game.Grid)->Tuple[int]:
+        """finds closest food and returns it's tuple point"""
+        myPos = gameState.getAgentPosition(self.index)
+        
+        minDist = np.inf
+
+        # tupleMemory 
+        tupleMemory = myPos
+        rowCount = 0
+
+        for row in matrix :
+            colCount = 0
+            # print("row: "+ str(row))
+
+            for element in row:
+                # print("rowcount "+ str(rowCount) + " colcount "+ str(colCount) + " element "+ str(element))
+
+                try:
+                  if element: # this is food
+                      currDist = self.getMazeDistance(myPos, (rowCount,colCount))
+                      if currDist < minDist:
+                          minDist = currDist
+                          tupleMemory = (rowCount,colCount) #(myPos, element)
+                except:
+                  print("error in FindClosestFood")
+                  pass
+
+                
+                colCount += 1
+            rowCount+= 1
+        return tupleMemory
+
+
+
+  def GetEatCount(self, gameState)->int:
+        """counts food and capsules that can eat"""
+        capsules = self.getCapsules(gameState)
+        food = self.getFood(gameState)
+
+        numbOfFood = GetFoodCount(food)
+        numbOfCapsules = GetFoodCount(capsules)
+        return numbOfFood+ numbOfCapsules
+
+
+
+
+  def CheckIfEnemyInMyTerritory(self, gameState)->bool:
+        """checks if enemy is in my territory"""
+        enemies = [gameState.getAgentState(i) for i in self.getOpponents(gameState)]
         invaders = [a for a in enemies if a.isPacman and a.getPosition() != None]
-        features['numberOfInvaders'] = len(invaders)
         if len(invaders) > 0:
-            dists = [self.getMazeDistance(myPos, a.getPosition()) for a in invaders]
-            features['exactEnemyDistance'] = min(dists)
+            return True
+        else:
+           #check if old food count is same as current food count
+            currentFoodCount = GetFoodCount(CaptureAgent.getFoodYouAreDefending(self, gameState))
+            if currentFoodCount < self.foodCountBeforeEnemyAttack:
+                # self.foodCountBeforeEnemyAttack = currentFoodCount
+                return True
+            else:
+                return False
 
-        
 
-        # check if stop or reverse
-        if action == Directions.STOP: features['stop'] = 1
-        rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
-        if action == rev: features['reverse'] = 1  
 
-        # check how much food each enemy has eaten
-        for enemy in invaders:
-            enemy_food_carried = enemy.numCarrying
-            features['foodEaten'] = enemy_food_carried
 
-        return features
+  def FindEnemyInMyTerritory(self, gameState)->Tuple[int]:
+        """finds enemy in my territory by comparing old food count with current food count"""
+        # todo: check why this function is not working
+       # check if old food count is same as current food count
+       # if different check where food is missing
+        currentFoodCount = GetFoodCount(CaptureAgent.getFoodYouAreDefending(self, gameState))
+        if currentFoodCount < self.foodCountBeforeEnemyAttack:
+            print("food count before enemy attack is "+ str(self.foodCountBeforeEnemyAttack) + " current food count is "+ str(currentFoodCount))
+            self.foodCountBeforeEnemyAttack = currentFoodCount
+            # find where food is missing
+
+            print("self.defendfood dimensions are "+ str(self.defendFood.height) + " " + str(self.defendFood.width))
+
+            for row in range(self.defendFood.height):
+                for col in range(self.defendFood.width):
+                    print("row "+ str(row) + " col "+ str(col))
+                    print("self defendfood "+ str(self.defendFood[row][col]))
+                    print(str(gameState.hasFood(row, col)))
+                    if self.defendFood[row][col] and not gameState.hasFood(row, col):
+                        self.defendFood = gameState.getAgentState(self.index).getFoodYouAreDefending()
+                        
+                        return tuple(row,col)
+
 
   def getWeightsDefensive(self):
         """interpetation:
@@ -153,9 +285,14 @@ class DummyAgent(CaptureAgent):
             distance2FoodCapsule: penalize increased distance to foodcapsule, i.e. defend capsules so don't get scared
             reverse: penalize going backwards 
         """
-        return {'numberOfInvaders': -1000, 'onDefense': 100, 'stop':-100 , 'fuzzyEnemyDistance': -20, 'exactEnemyDistance': -50,
+        return {'numberOfInvaders': -1000, 'onDefense': 100, 'stop':-200 , 'fuzzyEnemyDistance': -20, 'exactEnemyDistance': -50,
               'exactEnemyDistanceScaredGhost': -1000, 'fuzzyEnemyDistanceScaredGhost': -400, 'foodEaten': -20, 
               'distance2FoodCapsule': -5, 'reverse': -2}
+
+
+
+
+
   def getWeightsOffensive(self):
         """interpetation:
             foodScore: give reward for more score in food
@@ -168,10 +305,16 @@ class DummyAgent(CaptureAgent):
             minEnemyDistanceExactScared: enemy scared, within 5 distances => want to eat!
             stop: penalize stopping, cause risky if enemy gets closer!
             secondEnemyDist: punish if second enemy is also close by
+            reverse: penalize going backwards
+            distance2EnemyWhenGhost: if ghost, then try get closer to enemy
+            stop: penalize not moving
         """
-        return {'foodScore': 100, 'distance2food': -3, 'distance2Home': 1000, 'distance2capsule': -2, 'minEnemyDistanceFuzzy': -50,
-                'minEnemyDistanceExact': -100, 'minEnemyDistanceFuzzyScared': 5, 'minEnemyDistanceExactScared': 20, 'stop': -100, 
-                'secondEnemyDist': -10}
+        return {'foodScore': 100, 'distance2food': -10, 'distance2Home': 1000, 'distance2capsule': -2, 'minEnemyDistanceFuzzy': -50,
+                'minEnemyDistanceExact': -100, 'minEnemyDistanceFuzzyScared': 5, 'minEnemyDistanceExactScared': -20, 'stop': -100, 
+                'secondEnemyDist': -10, 'reverse':-2, 'distance2EnemyWhenGhost': -5, 'stop': -200}
+
+
+
   def getWeightsReturnHome(self):
         """interpetation: 
             distance2Home: penalize higher distance to home
@@ -182,15 +325,177 @@ class DummyAgent(CaptureAgent):
             minEnemyDistanceExactScared: know enemy exact position => eat them! obs: time dependent, if scared time about to run out then run away
             stop: high penalty for not moving
             onRoute: reward for going in shortest path home
+            reverse: penalize going backwards
+            stop: penalize not moving
         """
 
         return {'distance2Home': -50,  'distance2capsule': -5, 'minEnemyDistanceFuzzy': -50, 'minEnemyDistanceExact': -100,
-                'minEnemyDistanceFuzzyScared': 50, 'minEnemyDistanceExactScared': 200, 'stop': -200, 'onRoute': 30}
+                'minEnemyDistanceFuzzyScared': 50, 'minEnemyDistanceExactScared': 200, 'stop': -200, 'onRoute': 30, 'reverse': -2, 'stop': -200}
+
+
+ 
 
 
 
+  
+  def getFeatures(self, gameState, action):
+      
+        features = util.Counter()
+
+        successor = self.getSuccessor(gameState, action)
+
+        #--- info of my state----
+        
+        
+        # my new state/position after executing given action
+        myState = successor.getAgentState(self.index)
+        myPos = myState.getPosition()
+
+        eatenFood = gameState.getAgentState(self.index).numCarrying
+
+        # enemy capsules want to eat
+        enemyCapsules = self.getCapsules(gameState)
+        enemyCapsulesInt = len(enemyCapsules)
+        #-------------
+
+        # Computes distance to invaders we can see
+        enemies = [successor.getAgentState(i) for i in self.getOpponents(successor)]
 
 
+        # check if i am ghost and enemy is pacman and is near me
+        if not myState.isPacman and myState.scaredTimer == 0 and len(enemies) > 0 and self.role == "offense":
+           features = self.AssignDefensiveFeatures(gameState, enemies, myPos, features)
+        
+        # I am offensive agent, no pacman near me, i go eat food
+        elif self.role == "offense": 
+           features = self.AssignOffencsiveFeatures(gameState, enemies,myPos, features)
+        
+        # I am defensive agent
+        else: 
+            # debug draw on myPos
+            self.debugDraw(myPos, [0,1,0], clear=True) # green dot
+            features =  self.AssignDefensiveFeatures(gameState, enemies, myPos, features)
+
+        invaders = [a for a in enemies if a.isPacman and a.getPosition() != None]
+        
+
+        # check if stop or reverse
+        if action == Directions.STOP: features['stop'] = 1
+
+        rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
+
+        if action == rev: features['reverse'] = 1  
+
+        # check how much food each enemy has eaten
+        features['foodEaten'] = 0
+        for enemy in invaders:
+            enemy_food_carried = enemy.numCarrying
+            features['foodEaten'] = max(enemy_food_carried, features['foodEaten'])
+
+        return features
+
+
+  def AssignOffencsiveFeatures(self, gameState, enemies, myPos, features):
+      """assigns features for offensive agent, i am pac, running away from ghosts"""
+      # check if I am pacman or ghost
+      features['onDefence'] = 0
+      #check if enemy is ghost, if ghost then check distance to enemy
+      ghosts = [a for a in enemies if not a.isPacman and a.getPosition() != None]
+      dists = [self.getMazeDistance(myPos, a.getPosition()) for a in ghosts]
+      
+      amPac = gameState.getAgentState(self.index).isPacman
+      # todo: change so that checks if am ghost then don't run from ghosts
+
+      if len(dists) > 0:
+          # check if ghost is scared
+          if gameState.getAgentState(self.index).scaredTimer > 0:
+              print("scared ghost")
+              features['exactEnemyDistanceScaredGhost'] = min(dists)
+          else: # not scared
+              features['exactEnemyDistance'] = min(dists)
+
+      else: # use fuzzy distance 
+        # get noisy enemy distance
+        noisyDistance = gameState.getAgentDistances()
+        # keep only enemy distances
+        noisyDistance = [noisyDistance[i] for i in self.getOpponents(gameState)]      
+        # get closest enemy
+        closestEnemy = min(noisyDistance)
+        if gameState.getAgentState(self.index).scaredTimer > 0:
+          features['noisyEnemyDistanceScaredGhost'] = closestEnemy
+        else: # not scared
+          features['noisyEnemyDistance'] = closestEnemy
+
+      # get closest food or capsule
+      closestFood = self.FindClosest2Eat(gameState)
+      features['distance2food'] = self.getMazeDistance(myPos, closestFood)
+      
+      
+      #use debugDraw to draw red around offensive agent
+      self.debugDraw(myPos, [1,0,0], clear=True)
+
+      return features
+
+
+  def AssignDefensiveFeatures(self, gameState, enemies, myPos, features):
+       """get features for defensive agent"""
+       features['onDefence'] = 1
+    
+       #check if enemy is pacman, if pacman then check distance to enemy
+       pacs = [a for a in enemies if a.isPacman and a.getPosition() != None]
+       dists = [self.getMazeDistance(myPos, a.getPosition()) for a in pacs]
+       if len(dists) > 0:
+         # check if i am not scared and that enemy is not one step away from half of the map
+         # get half of the map
+         halfMap = gameState.data.layout.width/2
+         # get enemy position
+         enemyPos = pacs[0].getPosition() 
+         if gameState.getAgentState(self.index).scaredTimer == 0 and enemyPos[0] < halfMap - 1:
+             features['exactEnemyDistance'] = min(dists)
+         else:
+             features['exactEnemyDistanceScaredGhost'] = min(dists) 
+       
+         invaders = [a for a in enemies if a.isPacman and a.getPosition() != None]
+         features['numberOfInvaders'] = len(invaders)
+         if len(invaders) > 0:
+             dists = [self.getMazeDistance(myPos, a.getPosition()) for a in invaders]
+             # check if ghost is scared
+             if gameState.getAgentState(self.index).scaredTimer > 0:
+                 features['exactEnemyDistanceScaredGhost'] = 1
+             else:
+                 features['exactEnemyDistance'] = min(dists)
+         else: # use fuzzy distance
+             # get noisy enemy distance  
+             noisyDistance = gameState.getAgentDistances()
+             # keep only enemy distances
+             noisyDistance = [noisyDistance[i] for i in self.getOpponents(gameState)]
+             # get closest enemy
+             closestEnemy = min(noisyDistance)
+             if gameState.getAgentState(self.index).scaredTimer > 0: # if scared
+                 features['noisyEnemyDistanceScaredGhost'] = closestEnemy
+             else: # not scared
+                 features['noisyEnemyDistance'] = closestEnemy
+       return features
+
+
+
+  def getSuccessor(self, gameState, action):
+    """
+    Finds the next successor which is a grid position (location tuple).
+    """
+    successor = gameState.generateSuccessor(self.index, action)
+    pos = successor.getAgentState(self.index).getPosition()
+    if pos != nearestPoint(pos):
+      # Only half a grid position was covered
+      return successor.generateSuccessor(self.index, action)
+    else:
+      return successor
+
+  
+    
+
+  # def getWeights(self, gameState, action):
+  #   return {'successorScore': 100, 'distanceToFood': -1}
 
   # evaluation function
   def evaluationFunction(self, gameState, mode = "Attack"):
@@ -207,19 +512,33 @@ class DummyAgent(CaptureAgent):
     actions.remove(Directions.STOP)
     # print("actions = ", actions)
 
-    for action in actions:
-      features = self.getFeatures(gameState, action)
-      # weights is getWeightsOffensive if features['onDefence'] == 0 , getWeightsDefensive if features['onDefence'] == 1 and getWeightsReturnHome if above threshold
-      if features['onDefence'] == 0 and features['foodEaten'] < self.foodThreshold:
-        weights = self.getWeightsOffensive()
-      elif features['onDefence'] == 1 :
-        weights = self.getWeightsDefensive()
-      else:
-        weights = self.getWeightsReturnHome()
-      
-      val += features * weights
+    
 
-    # return val/len(actions)
+
+    for action in actions:
+      # Computes distance to invaders we can see
+      successor = self.getSuccessor(gameState, action)
+      myState = successor.getAgentState(self.index)
+      myPos = myState.getPosition()
+      enemies = [successor.getAgentState(i) for i in self.getOpponents(successor)]
+
+
+      features = self.getFeatures(gameState, action)
+      # weights = self.getWeights(gameState, action)
+
+      # check if i am ghost and enemy is pacman and is near me
+      if not myState.isPacman and myState.scaredTimer == 0 and len(enemies) > 0 and self.role == "offense":
+        weights = self.getWeightsDefensive()
+      # I am offensive agent, no pacman near me, i go eat food
+      elif self.role == "offense": 
+        weights = self.getWeightsOffensive()
+      else:
+        weights = self.getWeightsDefensive()
+
+      
+      #val += features * weights
+      val = max(val, features * weights)
+    return val/len(actions)
 
 
     # list of our food, enemy food, enemy pacman, enemy ghost, our pacman, our ghost, capsule
@@ -393,27 +712,33 @@ class DummyAgent(CaptureAgent):
       # check if enemy is visible from the successor state
       enemy_indices = opponent_team
       enemyList = [successor.getAgentPosition(i) for i in opponent_team]
-      enemyList = [enemy for enemy in enemyList if enemy != None] 
+      # remove None from enemyList, and corresponding enemy indices
+      enemy_indices = [enemy_indices[i] for i in range(len(enemyList)) if enemyList[i] != None]
+      enemyList = [enemy for enemy in enemyList if enemy != None]
       
       enemy_conf = None
 
-      if any(enemyList):
+      while (any(enemyList) and enemy_conf == None):
         # pick the closest enemy
-        enemy = min(enemyList, key = lambda x: self.getMazeDistance(successor.getAgentPosition(agent_ID), x))
+        enemy_pos = min(enemyList, key = lambda x: self.getMazeDistance(successor.getAgentPosition(agent_ID), x))
         
         # find ID of closest enemy
-        enemy = enemy_indices[enemyList.index(enemy)]
-
+        enemy_list_pos = enemyList.index(enemy_pos)
+        enemy_ID = enemy_indices[enemy_list_pos]
         # find conf of enemy
-        enemy_conf = successor.getAgentState(enemy).configuration
-        # print("enemy_conf = ", enemy_conf)
-        # print our agent's position
-        # print("our agent's position = ", successor.getAgentPosition(self.index))
+        enemy_conf = successor.getAgentState(enemy_ID).configuration
 
-        # if enemy is visible, then assume enemy makes next move
-        # print("enemy (in max) = ", enemy)
+        # remove enemy from list
+        enemyList.remove(enemy_pos)
+        enemy_indices.remove(enemy_ID)
+
+
       if enemy_conf != None:
-        act_value,_ = self.min_agent(successor, enemy, depth-1, time_left, alpha, beta)
+        # print("ENEMY IS MOVING")
+        # log distance to enemy
+        dist = self.getMazeDistance(successor.getAgentPosition(agent_ID), enemy_conf.getPosition())
+        # if dist > 5:
+        act_value,_ = self.min_agent(successor, enemy_ID, depth-1, time_left, alpha, beta)
 
         if act_value > v:
           v = act_value
@@ -472,28 +797,31 @@ class DummyAgent(CaptureAgent):
         # check if enemy is visible from the successor state
         enemy_indices = opponent_team
         enemyList = [successor.getAgentPosition(i) for i in opponent_team]
+        # remove None from enemyList, and corresponding enemy indices
+        enemy_indices = [enemy_indices[i] for i in range(len(enemyList)) if enemyList[i] != None]
         enemyList = [enemy for enemy in enemyList if enemy != None]
 
         enemy_conf = None
 
-        if any(enemyList):
+        while (any(enemyList) and enemy_conf == None):
           # pick the closest enemy
-          enemy = min(enemyList, key = lambda x: self.getMazeDistance(successor.getAgentPosition(self.index), x))
+          enemy_pos = min(enemyList, key = lambda x: self.getMazeDistance(successor.getAgentPosition(self.index), x))
           # if enemy is visible, then assume enemy makes next move
 
           # find ID of closest enemy
-          enemy = enemy_indices[enemyList.index(enemy)]
+          enemy_list_pos = enemyList.index(enemy_pos)
+          enemy_ID = enemy_indices[enemy_list_pos]
 
           # find conf of enemy
-          enemy_conf = successor.getAgentState(enemy).configuration
-          # print("enemy_conf = ", enemy_conf)
-          # print our agent's position
-          # print("our agent's position = ", successor.getAgentPosition(self.index))
+          enemy_conf = successor.getAgentState(enemy_ID).configuration
 
-          # print("enemy (in min) = ", enemy)
+          # remove enemy from list
+          enemyList.remove(enemy_pos)
+          enemy_indices.remove(enemy_ID)
+
           
         if enemy_conf != None:
-          act_value,_ = self.max_agent(successor, enemy, depth-1, time_left, alpha, beta)
+          act_value,_ = self.max_agent(successor, enemy_ID, depth-1, time_left, alpha, beta)
 
           if act_value < v:
             v = act_value
@@ -551,3 +879,14 @@ class DummyAgent(CaptureAgent):
       best_depth = max(depth_act_dict.keys())
       best_action = depth_act_dict[best_depth]
       return best_action    
+    
+
+
+def GetFoodCount(foodMatrix: game.Grid)-> int:
+    """given a bool matrix, counts number of 'True' elements"""
+    count = 0
+    for row in foodMatrix :
+        for element in row:
+            if element:
+                count += 1
+    return count
