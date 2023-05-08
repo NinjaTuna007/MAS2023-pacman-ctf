@@ -307,27 +307,33 @@ class DummyAgent(CaptureAgent):
       # check if enemy is visible from the successor state
       enemy_indices = opponent_team
       enemyList = [successor.getAgentPosition(i) for i in opponent_team]
-      enemyList = [enemy for enemy in enemyList if enemy != None] 
+      # remove None from enemyList, and corresponding enemy indices
+      enemy_indices = [enemy_indices[i] for i in range(len(enemyList)) if enemyList[i] != None]
+      enemyList = [enemy for enemy in enemyList if enemy != None]
       
       enemy_conf = None
 
-      if any(enemyList):
+      while (any(enemyList) and enemy_conf == None):
         # pick the closest enemy
-        enemy = min(enemyList, key = lambda x: self.getMazeDistance(successor.getAgentPosition(agent_ID), x))
+        enemy_pos = min(enemyList, key = lambda x: self.getMazeDistance(successor.getAgentPosition(agent_ID), x))
         
         # find ID of closest enemy
-        enemy = enemy_indices[enemyList.index(enemy)]
-
+        enemy_list_pos = enemyList.index(enemy_pos)
+        enemy_ID = enemy_indices[enemy_list_pos]
         # find conf of enemy
-        enemy_conf = successor.getAgentState(enemy).configuration
-        # print("enemy_conf = ", enemy_conf)
-        # print our agent's position
-        # print("our agent's position = ", successor.getAgentPosition(self.index))
+        enemy_conf = successor.getAgentState(enemy_ID).configuration
 
-        # if enemy is visible, then assume enemy makes next move
-        # print("enemy (in max) = ", enemy)
+        # remove enemy from list
+        enemyList.remove(enemy_pos)
+        enemy_indices.remove(enemy_ID)
+
+
       if enemy_conf != None:
-        act_value,_ = self.min_agent(successor, enemy, depth-1, time_left, alpha, beta)
+        # print("ENEMY IS MOVING")
+        # log distance to enemy
+        dist = self.getMazeDistance(successor.getAgentPosition(agent_ID), enemy_conf.getPosition())
+        if dist > 5:
+        act_value,_ = self.min_agent(successor, enemy_ID, depth-1, time_left, alpha, beta)
 
         if act_value > v:
           v = act_value
@@ -386,28 +392,31 @@ class DummyAgent(CaptureAgent):
         # check if enemy is visible from the successor state
         enemy_indices = opponent_team
         enemyList = [successor.getAgentPosition(i) for i in opponent_team]
+        # remove None from enemyList, and corresponding enemy indices
+        enemy_indices = [enemy_indices[i] for i in range(len(enemyList)) if enemyList[i] != None]
         enemyList = [enemy for enemy in enemyList if enemy != None]
 
         enemy_conf = None
 
-        if any(enemyList):
+        while (any(enemyList) and enemy_conf == None):
           # pick the closest enemy
-          enemy = min(enemyList, key = lambda x: self.getMazeDistance(successor.getAgentPosition(self.index), x))
+          enemy_pos = min(enemyList, key = lambda x: self.getMazeDistance(successor.getAgentPosition(self.index), x))
           # if enemy is visible, then assume enemy makes next move
 
           # find ID of closest enemy
-          enemy = enemy_indices[enemyList.index(enemy)]
+          enemy_list_pos = enemyList.index(enemy_pos)
+          enemy_ID = enemy_indices[enemy_list_pos]
 
           # find conf of enemy
-          enemy_conf = successor.getAgentState(enemy).configuration
-          # print("enemy_conf = ", enemy_conf)
-          # print our agent's position
-          # print("our agent's position = ", successor.getAgentPosition(self.index))
+          enemy_conf = successor.getAgentState(enemy_ID).configuration
 
-          # print("enemy (in min) = ", enemy)
+          # remove enemy from list
+          enemyList.remove(enemy_pos)
+          enemy_indices.remove(enemy_ID)
+
           
         if enemy_conf != None:
-          act_value,_ = self.max_agent(successor, enemy, depth-1, time_left, alpha, beta)
+          act_value,_ = self.max_agent(successor, enemy_ID, depth-1, time_left, alpha, beta)
 
           if act_value < v:
             v = act_value
