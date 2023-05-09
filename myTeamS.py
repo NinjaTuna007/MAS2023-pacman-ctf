@@ -121,6 +121,25 @@ class DummyAgent(CaptureAgent):
     print("[time] registerInitialState: "+ str(time.time()-startTime_registerInitialState))
 
 
+    # define self.exitPoint: point ON CENTRE LINE MAXIMIZING DISTANCE FROM HOME
+
+    # get the centre line
+    grid_width = self.walls.width
+    grid_height = self.walls.height
+    centre_line = [(grid_width//2, i) for i in range(grid_height)]
+    # check if position on centre_line is not a wall
+    centre_line = [point for point in centre_line if not self.walls[point[0]][point[1]]]
+
+    # get the home position
+    home = self.start
+
+    dists = [self.getMazeDistance(home, point) for point in centre_line]
+
+    # get the point on the centre line maximizing distance from home
+    self.exitPoint = centre_line[np.argmax(dists)]
+
+    self.exitDist = np.max(dists)
+    
 
 
 
@@ -309,9 +328,9 @@ class DummyAgent(CaptureAgent):
             distance2EnemyWhenGhost: if ghost, then try get closer to enemy
             stop: penalize not moving
         """
-        return {'foodScore': 100, 'distance2food': -10, 'distance2Home': 1000, 'distance2capsule': -2, 'minEnemyDistanceFuzzy': -50,
-                'minEnemyDistanceExact': -100, 'minEnemyDistanceFuzzyScared': 5, 'minEnemyDistanceExactScared': -20, 'stop': -100, 
-                'secondEnemyDist': -10, 'reverse':-2, 'distance2EnemyWhenGhost': -5, 'stop': -200}
+        return {'foodScore': 50, 'distance2food': -1, 'distance2Home': 10, 'distance2capsule': -2, 'minEnemyDistanceFuzzy': -50,
+                'minEnemyDistanceExact': -100, 'minEnemyDistanceFuzzyScared': 5, 'minEnemyDistanceExactScared': 20, 'stop': -100, 
+                'secondEnemyDist': -10, 'reverse':0, 'distance2EnemyWhenGhost': -5}
 
 
 
@@ -360,14 +379,18 @@ class DummyAgent(CaptureAgent):
 
         # Computes distance to invaders we can see
         enemies = [successor.getAgentState(i) for i in self.getOpponents(successor)]
+        enemy_IDs = self.getOpponents(successor)
+        enemy_pos = [successor.getAgentPosition(a) for a in enemy_IDs]
+        enemy_pos = [a for a in enemy_pos if a != None]
 
 
         # check if i am ghost and enemy is pacman and is near me
-        if not myState.isPacman and myState.scaredTimer == 0 and len(enemies) > 0 and self.role == "offense":
-           features = self.AssignDefensiveFeatures(gameState, enemies, myPos, features)
-        
+        if not myState.isPacman and myState.scaredTimer == 0 and len(enemy_pos) > 0 and self.role == "offense":
+          features = self.AssignDefensiveFeatures(gameState, enemies, myPos, features)
+          print("confusion")
         # I am offensive agent, no pacman near me, i go eat food
         elif self.role == "offense": 
+           print("I am offensive")
            features = self.AssignOffencsiveFeatures(gameState, enemies,myPos, features)
         
         # I am defensive agent
@@ -387,10 +410,15 @@ class DummyAgent(CaptureAgent):
         if action == rev: features['reverse'] = 1  
 
         # check how much food each enemy has eaten
-        features['foodEaten'] = 0
+        features['foodlost'] = 0
         for enemy in invaders:
             enemy_food_carried = enemy.numCarrying
-            features['foodEaten'] = max(enemy_food_carried, features['foodEaten'])
+            features['foodlost'] += enemy_food_carried
+
+        team = [successor.getAgentState(i) for i in self.getTeam(successor)]
+        features['foodgained'] = sum([a.numCarrying for a in team])
+
+        features['foodScore'] = features['foodgained'] - features['foodlost']
 
         return features
 
@@ -406,7 +434,12 @@ class DummyAgent(CaptureAgent):
       amPac = gameState.getAgentState(self.index).isPacman
       # todo: change so that checks if am ghost then don't run from ghosts
 
-      if len(dists) > 0:
+
+      enemy_pos = [a.getPosition() for a in enemies]
+      enemy_pos = [a for a in enemy_pos if a != None]
+      dists = [self.getMazeDistance(myPos, a) for a in enemy_pos]
+
+      if len(enemy_pos) > 0:
           # check if ghost is scared
           if gameState.getAgentState(self.index).scaredTimer > 0:
               print("scared ghost")
@@ -430,6 +463,22 @@ class DummyAgent(CaptureAgent):
       closestFood = self.FindClosest2Eat(gameState)
       features['distance2food'] = self.getMazeDistance(myPos, closestFood)
       
+      # get distance to home from my position
+      distance2Home = self.getMazeDistance(myPos, gameState.getInitialAgentPosition(self.index))
+      print("distance2Home: ", distance2Home)
+      width = gameState.data.layout.width
+      
+      # if i am ghost: 
+      # get food carried
+      foodCarried = gameState.getAgentState(self.index).numCarrying
+      if not amPac:
+        features['distance2Home'] = distance2Home
+      elif foodCarried >2: # i am pacman and have more than 2 food
+        features['distance2Home'] = -distance2Home
+      else: # i am pacman and have less than 2 food
+        # width of maze
+        features['distance2Home'] = self.exitDist
+        
       
       #use debugDraw to draw red around offensive agent
       self.debugDraw(myPos, [1,0,0], clear=True)
@@ -507,38 +556,58 @@ class DummyAgent(CaptureAgent):
     
     # new heuristic function
 
-    val = 0
+    val = gameState.getScore() * 1000
     actions = gameState.getLegalActions(self.index)
-    actions.remove(Directions.STOP)
+    # actions.remove(Directions.STOP)
     # print("actions = ", actions)
 
-    
-
+    # myState = gameState.getAgentState(self.index)
+    # myPos = myState.getPosition()
 
     for action in actions:
       # Computes distance to invaders we can see
       successor = self.getSuccessor(gameState, action)
       myState = successor.getAgentState(self.index)
-      myPos = myState.getPosition()
-      enemies = [successor.getAgentState(i) for i in self.getOpponents(successor)]
+      # successor = myState
+      enemies = self.getOpponents(successor)
+      # print("enemies = ", enemies)
+      # get distances to enemies
+      enemy_pos = [successor.getAgentPosition(a) for a in enemies]
+      enemy_pos = [a for a in enemy_pos if a != None]
+      # print("enemy_pos = ", enemy_pos)
+      
+      # dist_to_enemies = [self.getMazeDistance(myPos, gameState.getAgentPosition(a)) for a in enemies]
 
+      # print("dist_to_enemies = ", dist_to_enemies)
 
       features = self.getFeatures(gameState, action)
       # weights = self.getWeights(gameState, action)
 
       # check if i am ghost and enemy is pacman and is near me
-      if not myState.isPacman and myState.scaredTimer == 0 and len(enemies) > 0 and self.role == "offense":
+      if not myState.isPacman and myState.scaredTimer == 0 and len(enemy_pos) > 0 and self.role == "offense":
+        print("i am ghost and enemy is pacman and is near me")
         weights = self.getWeightsDefensive()
+        val += features * weights
+        continue
+        # return val / len(actions)
       # I am offensive agent, no pacman near me, i go eat food
-      elif self.role == "offense": 
+      if self.role == "offense": 
+        # print("I am offensive agent, no pacman near me, i go eat food")
         weights = self.getWeightsOffensive()
+        val += (features * weights)
+        continue
+        # return val / len(actions)
       else:
+        # print("I am defensive agent, no pacman near me, i go defend")
         weights = self.getWeightsDefensive()
+        val += (features * weights)
+        continue
+        # return val / len(actions)
 
-      
-      #val += features * weights
-      val = max(val, features * weights)
-    return val/len(actions)
+    return val / len(actions)
+    #   #val += features * weights
+    #   val = max(val, features * weights)
+    # return val/len(actions)
 
 
     # list of our food, enemy food, enemy pacman, enemy ghost, our pacman, our ghost, capsule
@@ -790,7 +859,7 @@ class DummyAgent(CaptureAgent):
         
         current_time = time.time()
         if current_time - start_time > time_left - 0.05:
-          return v
+          return v, best_action
         else:
           time_left = time_left - (current_time - start_time)
         
@@ -851,7 +920,7 @@ class DummyAgent(CaptureAgent):
     '''
 
     # depth_list = [4, 6, 8]
-    depth_list = [3] # no IDS for now
+    depth_list = [4] # no IDS for now
 
     time_left = 0.95 # time left for the agent to choose an action
 
