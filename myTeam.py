@@ -122,19 +122,22 @@ class DummyAgent(CaptureAgent):
     
     # new heuristic function
 
-    val = 0
-    actions = gameState.getLegalActions(self.index)
-    actions.remove(Directions.STOP)
-    # print("actions = ", actions)
+    # if two attackers in our territory
+    # then mode = "Defend" for both our agents
 
-    for action in actions:
-      features = self.getFeatures(gameState, action)
-      weights = self.getWeights(gameState, action)
-      
-      val += features * weights
+    if False:
+      val = 0
+      actions = gameState.getLegalActions(self.index)
+      actions.remove(Directions.STOP)
+      # print("actions = ", actions)
 
-    return val/len(actions)
+      for action in actions:
+        features = self.getFeatures(gameState, action)
+        weights = self.getWeights(gameState, action)
+        
+        val += features * weights
 
+      return val/len(actions)
 
     # list of our food, enemy food, enemy pacman, enemy ghost, our pacman, our ghost, capsule
     foodList = self.getFood(gameState).asList()
@@ -306,11 +309,22 @@ class DummyAgent(CaptureAgent):
 
       # check if enemy is visible from the successor state
       enemy_indices = opponent_team
-      enemyList = [successor.getAgentPosition(i) for i in opponent_team]
-      # remove None from enemyList, and corresponding enemy indices
-      enemy_indices = [enemy_indices[i] for i in range(len(enemyList)) if enemyList[i] != None]
-      enemyList = [enemy for enemy in enemyList if enemy != None]
-      
+
+      # print("enemy_indices = ", enemy_indices)
+
+      enemy_pos_list = [successor.getAgentPosition(i) for i in enemy_indices]
+      # print("enemy_pos_list = ", enemy_pos_list)
+      # filter out none positions
+      enemy_indices = [enemy_indices[i] for i in range(len(enemy_pos_list)) if enemy_pos_list[i] != None]
+      enemy_pos_list = [enemy_pos for enemy_pos in enemy_pos_list if enemy_pos != None]
+
+      # distance threshold for enemy visibility: 5 units
+      dist_list = [self.getMazeDistance(successor.getAgentPosition(agent_ID), enemy_pos) for enemy_pos in enemy_pos_list]
+
+      # filter out enemies that are too far away
+      enemy_indices = [enemy_indices[i] for i in range(len(dist_list)) if dist_list[i] < 6]
+      enemyList = [successor.getAgentPosition(i) for i in enemy_indices]
+
       enemy_conf = None
 
       while (any(enemyList) and enemy_conf == None):
@@ -331,8 +345,6 @@ class DummyAgent(CaptureAgent):
       if enemy_conf != None:
         # print("ENEMY IS MOVING")
         # log distance to enemy
-        dist = self.getMazeDistance(successor.getAgentPosition(agent_ID), enemy_conf.getPosition())
-        if dist > 5:
         act_value,_ = self.min_agent(successor, enemy_ID, depth-1, time_left, alpha, beta)
 
         if act_value > v:
@@ -385,17 +397,28 @@ class DummyAgent(CaptureAgent):
         
         current_time = time.time()
         if current_time - start_time > time_left - 0.05:
-          return v
+          return v, best_action
         else:
           time_left = time_left - (current_time - start_time)
         
         # check if enemy is visible from the successor state
         enemy_indices = opponent_team
-        enemyList = [successor.getAgentPosition(i) for i in opponent_team]
-        # remove None from enemyList, and corresponding enemy indices
-        enemy_indices = [enemy_indices[i] for i in range(len(enemyList)) if enemyList[i] != None]
-        enemyList = [enemy for enemy in enemyList if enemy != None]
 
+        # print("enemy_indices = ", enemy_indices)
+
+        enemy_pos_list = [successor.getAgentPosition(i) for i in enemy_indices]
+        # print("enemy_pos_list = ", enemy_pos_list)
+        # filter out none positions
+        enemy_indices = [enemy_indices[i] for i in range(len(enemy_pos_list)) if enemy_pos_list[i] != None]
+        enemy_pos_list = [enemy_pos for enemy_pos in enemy_pos_list if enemy_pos != None]
+
+        # distance threshold for enemy visibility: 5 units
+        dist_list = [self.getMazeDistance(successor.getAgentPosition(agent_ID), enemy_pos) for enemy_pos in enemy_pos_list]
+        # filter out enemies that are too far away
+        enemy_indices = [enemy_indices[i] for i in range(len(dist_list)) if dist_list[i] < 6]
+        enemyList = [successor.getAgentPosition(i) for i in enemy_indices]
+
+        
         enemy_conf = None
 
         while (any(enemyList) and enemy_conf == None):
