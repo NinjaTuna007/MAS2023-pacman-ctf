@@ -90,6 +90,8 @@ class DummyAgent(CaptureAgent):
     startTime_registerInitialState = time.time()
     # bool: if on read team then true, if false then player is on blue team
     self.teamRed = gameState.isOnRedTeam(self.index)
+
+    
     
     
     # bool for pacman to return home
@@ -140,6 +142,9 @@ class DummyAgent(CaptureAgent):
 
     self.exitDist = np.max(dists)
     
+    
+       
+    
 
 
 
@@ -186,9 +191,9 @@ class DummyAgent(CaptureAgent):
         
         # loop through food, remember closest food
         closestFood = self.FindClosestFood(gameState, food)
-        print("closest food is "+ str(closestFood))
+        # print("closest food is "+ str(closestFood))
         
-        print("closest capsule is "+ str(closestCapsule))
+        # print("closest capsule is "+ str(closestCapsule))
 
         myPos = gameState.getAgentPosition(self.index)
 
@@ -541,22 +546,211 @@ class DummyAgent(CaptureAgent):
       return successor
 
   
+  def evaluationFunction(self, gameState, mode = "Attack"):
+    # todo: add debug draw to find pac is which, display their current evaluation score
+
+    # if terminal state
+    if gameState.isOver():
+      return gameState.getScore()
+    
+    val = gameState.getScore() * 1000
+    actions = gameState.getLegalActions(self.index)
+
+    
+    #---------position related features-----------------
+    # enemies that are pacman
+    enemyPacmanList = [a for a in self.getOpponents(gameState) if gameState.getAgentState(a).isPacman]
+    # print("enemyPacmanList = ", enemyPacmanList)
+    # get enemy positions
+    enemyPos = [gameState.getAgentState(a).getPosition() for a in enemyPacmanList]
+
+
+    # get my position
+    myPos = gameState.getAgentState(self.index).getPosition()
+
+    # get distance to home from my position
+    distance2Home = self.getMazeDistance(myPos, gameState.getInitialAgentPosition(self.index))
+    print(" ")
+    print("#############################")
+    print("#############################")
+    print(" ")
+    print("[id] "+ str(self.index)+" distance2Home: ", str(distance2Home))
+
+    #--------Food related features-----------------
+    # our food, enemy food
+    myFood = self.getFood(gameState).asList()
+    enemyFood = self.getFoodYouAreDefending(gameState).asList()
+
+    # food carried
+    foodCarried = gameState.getAgentState(self.index).numCarrying
+    print("[id] "+ str(self.index)+" food carried: ", str(foodCarried))
+
+    # food enemy is carrying
+    enemyFoodCarried = 0
+    for enemy in enemyPacmanList:
+      enemyFoodCarried += gameState.getAgentState(enemy).numCarrying
+    
+    # total score
+    totalScore = gameState.getScore()
+    print("[id] "+ str(self.index)+" total score: ", str(totalScore))
+
+    # get distance to closest food
+    closestFood = self.FindClosest2Eat(gameState)
+    dist2Food = self.getMazeDistance(myPos, closestFood)
+    #-------------------------------------------------
+
+    # if self.role = defender, return defence heuristics
+    # if self.role == "defender":
+    #    return 
+    # foodscore, distance2food (food/capsule), distance2home, distance2enemy (exact or fuzzy), stop, reverse
+    
+    foodScore = foodCarried - enemyFoodCarried + totalScore
+    val = foodScore * 1000
+
+    print("[id] "+ str(self.index)+" enemy food carried: ", str(enemyFoodCarried))
+    print("[id] "+ str(self.index)+" foodScore: ", str(foodScore))
+
+    # if defender constant is 1, offensive -1
+    roleConstant = -1
+
+    # if defender
+    if self.role == "defender":
+      # limit distance2home to values between 0 and 5, give reward for being home but not too much
+      val += math.clamp(distance2Home, 0, 5) 
+      roleConstant = 1
+
+      print("[id] "+ str(self.index)+" role defender, distance2home "+ str(distance2Home)+" clamped "+ str( math.clamp(distance2Home, 0, 5) ))
+
+    # if offensive and still ghost
+    elif not gameState.getAgentState(self.index).isPacman and self.role == "offensive":
+      val += math.clamp(distance2Home, 0, 10) * roleConstant # negative scoring for being at home, limited to [-10,0]
+      print("[id] "+ str(self.index)+" role offensive, distance2home "+ str(distance2Home)+" clamped "+ str( math.clamp(distance2Home, 0, 10) ))
+
+      # if  my position is food position
+      if myPos in myFood:
+        val += 1000
+        print("[id] "+ str(self.index)+" food reward! " )
+
+      # check if myPos is enemyPos, if so, check if scared or not, reward/penalty accordingly
+      if myPos in enemyPos and gameState.getAgentState(self.index).scaredTimer == 0:
+         val -= 10000
+         print("[id] "+ str(self.index)+ " penalty for being eaten! ")
+      elif myPos in enemyPos and gameState.getAgentState(self.index).scaredTimer > 0:
+        val += 10000
+        print("[id] "+ str(self.index)+ " reward for eating enemy! ")
+
+        
+
+
+
+    else: # if offensive and pacman
+      # check food carried is less than self.foodThreshold
+      # if foodCarried < self.foodThreshold:
+      #   val += dist2Food * roleConstant
+      # else: # if food carried is more than self.foodThreshold
+      #   val += distance2Home * roleConstant *1000 # negative scoring for being at home
+      if foodCarried < 1:
+        val += dist2Food * roleConstant
+        print("[id] "+ str(self.index)+ " food <1 constant "+ str(roleConstant)+" dist2Food "+ str(dist2Food))
+
+      else: # if food carried is more than self.foodThreshold
+        val += distance2Home * roleConstant *10 # negative scoring for being at home
+        print("[id] "+ str(self.index)+ " food >1 constant "+ str(roleConstant)+" distance2Home "+ str(distance2Home))
+
+    # if i am carrying food and get over to my halfplane give reward
+    
+    print("halfplane check "+ str(myPos[0] - gameState.data.layout.width/2 -3))
+    if foodCarried > 0 and (myPos[0] - gameState.data.layout.width/2 -3) < 0:
+      val += 100000
+      print("[id] "+ str(self.index)+ " reward for crossing halfplane! ")
+
+    if foodCarried > 0:
+       # if i am red team
+      if self.red:
+         if (myPos[0] - gameState.data.layout.width/2 -3) < 0:
+            val += 100000
+            print("[id] "+ str(self.index)+ " reward for crossing halfplane! ")
+      else: # if i am blue team
+          if (myPos[0] - gameState.data.layout.width/2 +3) > 0:
+            val += 100000
+            print("[id] "+ str(self.index)+ " reward for crossing halfplane! ")
+       
+
     
 
-  # def getWeights(self, gameState, action):
-  #   return {'successorScore': 100, 'distanceToFood': -1}
+
+
+
+    # loop through possible actions
+    for action in actions:
+      successor = self.getSuccessor(gameState, action)
+      # my new state
+      myState = successor.getAgentState(self.index)
+      # my new position
+      myPos = myState.getPosition()
+
+      # check if enemies nearby
+      enemies = self.getOpponents(successor)
+      # list of enemy positions
+      enemyPosList = [successor.getAgentState(a).getPosition() for a in enemies if successor.getAgentState(a).getPosition() != None]
+      
+      # distance to closest enemy
+      if len(enemyPosList) > 0:
+        dist2Enemy = min([self.getMazeDistance(myPos, enemyPos) for enemyPos in enemyPosList])
+        # defender: constant is 1, penalizes being away from enemy
+        if self.role == "defender":
+          val -= dist2Enemy *5 * roleConstant 
+        print("[id] "+ str(self.index)+ " dist2Enemy "+ str(dist2Enemy)+" constant "+ str(roleConstant))
+    
+      # if my new position is enemy position
+      if myPos in enemyPosList:
+        val += 1000 * roleConstant # big reward if eat enemy
+        print("[id] "+ str(self.index)+ " reward for eating enemy! ")
+
+
+
+
+
+    return val
+
+
+
+
+
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   # evaluation function
-  def evaluationFunction(self, gameState, mode = "Attack"):
-    # heuristic function to evaluate the state of the game
+  def evaluationFunction_Old(self, gameState, mode = "Attack"):
+    """heuristic function to evaluate the state of the game"""
 
     # if terminal state    
     if gameState.isOver():
       return gameState.getScore()
     
-    # new heuristic function
 
     val = gameState.getScore() * 1000
+
+    # get possible legal actions
     actions = gameState.getLegalActions(self.index)
     # actions.remove(Directions.STOP)
     # print("actions = ", actions)
@@ -564,32 +758,38 @@ class DummyAgent(CaptureAgent):
     # myState = gameState.getAgentState(self.index)
     # myPos = myState.getPosition()
 
+    # loop through actions
     for action in actions:
-      # Computes distance to invaders we can see
+      # get the new state, if i take this action
       successor = self.getSuccessor(gameState, action)
       myState = successor.getAgentState(self.index)
-      # successor = myState
+      
       enemies = self.getOpponents(successor)
       # print("enemies = ", enemies)
-      # get distances to enemies
+      
+      # get distances to enemies, if they are visible, i.e. close enough
       enemy_pos = [successor.getAgentPosition(a) for a in enemies]
       enemy_pos = [a for a in enemy_pos if a != None]
       # print("enemy_pos = ", enemy_pos)
       
       # dist_to_enemies = [self.getMazeDistance(myPos, gameState.getAgentPosition(a)) for a in enemies]
-
       # print("dist_to_enemies = ", dist_to_enemies)
 
+      # call getFeatures function to get features for this action
       features = self.getFeatures(gameState, action)
-      # weights = self.getWeights(gameState, action)
+      
 
-      # check if i am ghost and enemy is pacman and is near me
+      
+      # check: i am ghost, enemy is pacman, enemy is near me, i am not scared and i am offensive agent
       if not myState.isPacman and myState.scaredTimer == 0 and len(enemy_pos) > 0 and self.role == "offense":
         print("i am ghost and enemy is pacman and is near me")
+
+        # since i am ghost, and enemy is near, i should defend
         weights = self.getWeightsDefensive()
         val += features * weights
         continue
         # return val / len(actions)
+
       # I am offensive agent, no pacman near me, i go eat food
       if self.role == "offense": 
         # print("I am offensive agent, no pacman near me, i go eat food")
@@ -597,6 +797,8 @@ class DummyAgent(CaptureAgent):
         val += (features * weights)
         continue
         # return val / len(actions)
+      
+      # I am defensive agent
       else:
         # print("I am defensive agent, no pacman near me, i go defend")
         weights = self.getWeightsDefensive()
@@ -920,7 +1122,7 @@ class DummyAgent(CaptureAgent):
     '''
 
     # depth_list = [4, 6, 8]
-    depth_list = [4] # no IDS for now
+    depth_list = [3] # no IDS for now
 
     time_left = 0.95 # time left for the agent to choose an action
 
@@ -934,11 +1136,23 @@ class DummyAgent(CaptureAgent):
       if current_time - start_time > time_left:
         break
       
+      print(" ")
+      print("#########################")
+      print("#### calling max ########")
+      print("#########################")
+      print(" ")
+
       v, best_action = self.max_agent(gameState, self.index, depth, time_left)
       if best_action != None:
         depth_act_dict[depth] = best_action
       else:
         break
+      
+    print(" ")
+    print("#########################")
+    print("#### end max ########")
+    print("#########################")
+    print(" ")
 
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:

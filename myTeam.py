@@ -259,22 +259,22 @@ class HybridAgent( OffensiveReflexAgent):
         self.originalNumberOfFood = initialFoodCount
         self.foodCountBeforeEnemyAttack = initialFoodCount
         
-        print("number of foodcapsules are "+ str(self.originalNumberOfFood))
+        # print("number of foodcapsules are "+ str(self.originalNumberOfFood))
 
         # initial roles setup in start, they start at different positions, set first one to defense,second to offense
 
         
         self.canEatCount = self.GetEatCount(gameState)
-        print(self.canEatCount)
+        # print(self.canEatCount)
         self.foodThreshold = int( (self.canEatCount-2)/5 )
 
         # print initial position of agents
-        print("[id]"+str(self.index)+"initial position of agents"+ str(gameState.getAgentPosition(self.index)))
+        # print("[id]"+str(self.index)+"initial position of agents"+ str(gameState.getAgentPosition(self.index)))
         
         # assign roles, no particular reason for this order, they are essentially in same position
         self.AssignRoles(gameState)
 
-        print("[time] registerInitialState: "+ str(time.time()-startTime_registerInitialState))
+        # print("[time] registerInitialState: "+ str(time.time()-startTime_registerInitialState))
 
 
     
@@ -285,7 +285,7 @@ class HybridAgent( OffensiveReflexAgent):
             self.role = "defense"
         else:
             self.role = "offense"
-        print("agent "+ str(self.index) + " role is " + self.role)
+        # print("agent "+ str(self.index) + " role is " + self.role)
         pass
 
 
@@ -316,9 +316,9 @@ class HybridAgent( OffensiveReflexAgent):
         
         # loop through food, remember closest food
         closestFood = self.FindClosestFood(gameState, food)
-        print("closest food is "+ str(closestFood))
+        # print("closest food is "+ str(closestFood))
         
-        print("closest capsule is "+ str(closestCapsule))
+        # print("closest capsule is "+ str(closestCapsule))
 
         myPos = gameState.getAgentPosition(self.index)
 
@@ -356,7 +356,7 @@ class HybridAgent( OffensiveReflexAgent):
                           minDist = currDist
                           tupleMemory = (rowCount,colCount) #(myPos, element)
                 except:
-                  print("error in FindClosestFood")
+                  # print("error in FindClosestFood")
                   pass
 
                 
@@ -444,7 +444,7 @@ class HybridAgent( OffensiveReflexAgent):
       if len(dists) > 0:
           # check if ghost is scared
           if gameState.getAgentState(self.index).scaredTimer > 0:
-              print("scared ghost")
+              # print("scared ghost")
               features['exactEnemyDistanceScaredGhost'] = min(dists)
           else: # not scared
               features['exactEnemyDistance'] = min(dists)
@@ -595,7 +595,7 @@ class HybridAgent( OffensiveReflexAgent):
        # if different check where food is missing
         currentFoodCount = GetFoodCount(CaptureAgent.getFoodYouAreDefending(self, gameState))
         if currentFoodCount < self.foodCountBeforeEnemyAttack:
-            print("food count before enemy attack is "+ str(self.foodCountBeforeEnemyAttack) + " current food count is "+ str(currentFoodCount))
+            # print("food count before enemy attack is "+ str(self.foodCountBeforeEnemyAttack) + " current food count is "+ str(currentFoodCount))
             self.foodCountBeforeEnemyAttack = currentFoodCount
             # find where food is missing
 
@@ -603,9 +603,9 @@ class HybridAgent( OffensiveReflexAgent):
 
             for row in range(self.defendFood.height):
                 for col in range(self.defendFood.width):
-                    print("row "+ str(row) + " col "+ str(col))
-                    print("self defendfood "+ str(self.defendFood[row][col]))
-                    print(str(gameState.hasFood(row, col)))
+                    # print("row "+ str(row) + " col "+ str(col))
+                    # print("self defendfood "+ str(self.defendFood[row][col]))
+                    # print(str(gameState.hasFood(row, col)))
                     if self.defendFood[row][col] and not gameState.hasFood(row, col):
                         self.defendFood = gameState.getAgentState(self.index).getFoodYouAreDefending()
                         
