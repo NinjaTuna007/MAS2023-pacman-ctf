@@ -83,6 +83,13 @@ class DummyAttackAgent(CaptureAgent):
     Your initialization code goes here, if you need any.
     '''
 
+    # =====original register initial state=======
+    self.start = gameState.getAgentPosition(self.index)
+    self.cross_dist = 0
+
+    # find symmetric start position of opponent
+    self.opponent_start = (gameState.data.layout.width - 1 - self.start[0], gameState.data.layout.height - 1 - self.start[1])
+
   def getSuccessor(self, gameState, action):
     """
     Finds the next successor which is a grid position (location tuple).
@@ -95,49 +102,123 @@ class DummyAttackAgent(CaptureAgent):
     else:
       return successor
 
-  def getFeatures(self, gameState, action):
-    features = util.Counter()
-    successor = self.getSuccessor(gameState, action)
-    foodList = self.getFood(successor).asList()    
-    features['successorScore'] = -len(foodList)#self.getScore(successor)
-
-    # Compute distance to the nearest food
-
-    if len(foodList) > 0: # This should always be True,  but better safe than sorry
-      myPos = successor.getAgentState(self.index).getPosition()
-      minDistance = min([self.getMazeDistance(myPos, food) for food in foodList])
-      features['distanceToFood'] = minDistance
-    return features
-
-  def getWeights(self, gameState, action):
-    return {'successorScore': 100, 'distanceToFood': -1}
-
   # evaluation function
   def evaluationFunction(self, gameState, mode = "Attack"):
     # heuristic function to evaluate the state of the game
 
     # if terminal state    
     if gameState.isOver():
-      return gameState.getScore()
+      val = gameState.getScore()
+      return val
     
-    # new heuristic function
+    TeamFoodCarrying = 0
+    EnemyFoodCarrying = 0
+    # get food carrying of team
+    for i in self.getTeam(gameState):
+      TeamFoodCarrying += gameState.getAgentState(i).numCarrying
+    # get food carrying of enemy
+    for i in self.getOpponents(gameState):
+      EnemyFoodCarrying += gameState.getAgentState(i).numCarrying
+    
+    val = gameState.getScore() * 1000 # score is important
 
-    # if two attackers in our territory
-    # then mode = "Defend" for both our agents
+    food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * 250 # food carrying is important
 
-    val = 0
-    actions = gameState.getLegalActions(self.index)
-    actions.remove(Directions.STOP)
-    # print("actions = ", actions)
+    # decay factor for food carrying: want to make depositing food more important as amount of carried food increases
+    food_carry_val = food_carry_val * math.exp(-TeamFoodCarrying/10)
 
-    for action in actions:
-      features = self.getFeatures(gameState, action)
-      weights = self.getWeights(gameState, action)
+    val += food_carry_val
+
+
+    # check if i am pacman
+    amPac = gameState.getAgentState(self.index).isPacman
+
+    # distance between starting position and current position
+    start_dist = self.getMazeDistance(self.start, gameState.getAgentPosition(self.index))
+
+
+    if not amPac:
+      # push to the other side
+      val += start_dist
+
+      width = gameState.data.layout.width
+      # if current x coord is half of the board, then add 1000 to score
+      if gameState.getAgentPosition(self.index)[0] == width//2 and start_dist != self.cross_dist:
+        # distance between starting position and current position
+        self.cross_dist = start_dist
+
+      # chase enemy pacman and eat it
+      enemyList = self.getOpponents(gameState)
+      # check list of enemy pacmans
+      enemyPacList = [gameState.getAgentState(i) for i in enemyList if gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
       
-      val += features * weights
+      # incentivize eating enemy pacman
+      if len(enemyPacList) > 0:
+        val += 100 / len(enemyPacList)
 
-    return val/len(actions)
-    
+      enemyList = [gameState.getAgentPosition(i) for i in enemyList]
+      # remove None values
+      enemy_pos_list = [i for i in enemyList if i != None]
+
+      if len(enemy_pos_list) > 0:
+        enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
+        for i in range(len(enemy_dist_list)):
+          val += 100/enemy_dist_list[i]
+      
+      # return value
+      return val
+
+
+    else: # if i am pacman, i.e., i am on the other side
+
+      val += self.cross_dist + 100 # to ensure value doesn't fall when pacman is on the other side
+
+      # check how much food i have in my stomach
+      foodCarrying = gameState.getAgentState(self.index).numCarrying
+      # if enough food in my stomach, go back to my side
+      
+      if foodCarrying > 0:
+        pass # need to figure this out properly
+
+      # run away from enemy ghosts
+      enemyList = self.getOpponents(gameState)
+      enemyGhostList = [gameState.getAgentState(i) for i in enemyList if not gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
+
+      # find distance to enemy ghosts
+      enemyGhostPosList = [i.getPosition() for i in enemyGhostList]
+      if len(enemyGhostPosList) > 0:
+        enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
+        for i in range(len(enemyGhostDistList)):
+          val += enemyGhostDistList[i] * 100
+
+      # find food and eat it
+      foodList = self.getFood(gameState).asList()
+      
+      if len(foodList) > 2:
+        food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
+        # find closest food
+        closest_food_dist = min(food_dist_list)
+        val += 50/closest_food_dist
+
+      # check list of enemy ghosts
+      enemyList = self.getOpponents(gameState)
+      enemyGhostList = [gameState.getAgentState(i) for i in enemyList if not gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
+
+      # find distance to enemy ghosts
+      enemyGhostPosList = [i.getPosition() for i in enemyGhostList]
+      if len(enemyGhostPosList) > 0:
+        enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
+        for i in range(len(enemyGhostDistList)):
+          val += enemyGhostDistList[i] * 100
+
+        val -= start_dist * 2 # if enemy ghost is close, pacman should try to go back to its side
+
+
+
+
+
+
+    return val
 
   # setup for minimax
   def getSuccessors(self, gameState, player_ID):
@@ -290,7 +371,7 @@ class DummyAttackAgent(CaptureAgent):
         
         current_time = time.time()
         if current_time - start_time > time_left - 0.05:
-          return v
+          return v, best_action
         else:
           time_left = time_left - (current_time - start_time)
         
@@ -426,86 +507,15 @@ class DummyDefenseAgent(CaptureAgent):
 
     # =====original register initial state=======
     self.start = gameState.getAgentPosition(self.index)
+    self.cross_dist = 0
 
-    # =====ParticleCTFAgent init================
-    # self.numParticles = numParticles
-    self.initialize(gameState)
-    # =====Features=============
-    self.numFoodToEat = len(self.getFood(gameState).asList()) - 2
-    self.scaredMoves = 0
-    self.defenseScaredMoves = 0
-    CaptureAgent.registerInitialState(self, gameState)
-    self.stopped = 0
-    self.stuck = False
-    self.numStuckSteps = 0
-    self.offenseInitialIncentivize = True
-    self.defenseInitialIncentivize = True
-    self.width = self.getFood(gameState).width
-    self.height = self.getFood(gameState).height
-    self.halfway = self.width / 2
+    # find symmetric start position of opponent
+    self.opponent_start = (gameState.data.layout.width - 1 - self.start[0], gameState.data.layout.height - 1 - self.start[1])
 
-    self.reverse = 0
-    self.flank = False
-    self.numRevSteps = 0
-
-    # ====new home
-    furthest_home = None
-    furthest_home_dist = 0
-    myPos = gameState.getAgentPosition(self.index)
-
-    middle = self.halfway  # already correct
-    list_of_homes = [(middle, 0), (middle, 1), (middle, 2), (middle, 3), (middle, 4),
-                        (middle, int(self.height / 2)), (middle, int(self.height / 2) + 1),
-                        (middle, int(self.height / 2) + 2), (middle, int(self.height / 2) + 3),
-                        (middle, int(self.height / 2) - 1), (middle, int(self.height / 2) - 2),
-                        (middle, int(self.height / 2) - 3),
-                        (middle, self.height - 1), (middle, self.height - 2), (middle, self.height - 3),
-                        (middle, self.height - 4)]
-    legals = set(self.legalPositions)
-    legal_homes = list()
-    for home in list_of_homes:
-        if home in legals:
-            legal_homes.append(home)
-
-            dist = self.getMazeDistance(myPos, home)
-            if dist > furthest_home_dist:
-                furthest_home_dist = dist
-                furthest_home = home
-    legal_homes.append(self.start)
-    self.positions_along_border_of_home = legal_homes
-
-    # ====setting initial position to go to==========
-    self.furthest_position_along_border_of_home = furthest_home
-    self.go_to_furthest_position = True
-
-  def initialize(self, gameState, legalPositions=None):
-    self.legalPositions = gameState.getWalls().asList(False)
-    # self.initializeParticles()
-    self.a, self.b = self.getOpponents(gameState)
-    # for fail
-    self.initialGameState = gameState
-
-  def setEnemyPosition(self, gameState, pos, enemyIndex):
-    foodGrid = self.getFood(gameState)
-    halfway = foodGrid.width / 2
-    conf = game.Configuration(pos, game.Directions.STOP)
-
-    # FOR THE WEIRD ERROR CHECK
-    if gameState.isOnRedTeam(self.index):
-        if pos[0] >= halfway:
-            isPacman = False
-        else:
-            isPacman = True
-    else:
-        if pos[0] >= halfway:
-            isPacman = True
-        else:
-            isPacman = False
-    gameState.data.agentStates[enemyIndex] = game.AgentState(conf, isPacman)
-
-    return gameState
-
-
+    # to infer position of enemy by tracking food availability
+    self.remainingFoodToDefend = self.getFoodYouAreDefending(gameState).asList()
+    self.last_seen = []    
+    
 
   def getSuccessor(self, gameState, action):
     """
@@ -519,144 +529,84 @@ class DummyDefenseAgent(CaptureAgent):
     else:
       return successor
 
-  def getFeatures(self, gameState, action):
-
-    features = util.Counter()
-    successor = self.getSuccessor(gameState, action)
-
-    myState = successor.getAgentState(self.index)
-    myPos = myState.getPosition()
-
-    numCapsulesDefending = len(gameState.getBlueCapsules())
-    numCapsulesLeft = len(successor.getBlueCapsules())
-    if self.red:
-        numCapsulesDefending = len(gameState.getRedCapsules())
-        numCapsulesLeft = len(successor.getRedCapsules())
-
-    # are we scared?
-    localDefenseScaredMoves = 0
-    if numCapsulesLeft < numCapsulesDefending:
-        localDefenseScaredMoves = self.defenseScaredMoves + 40
-    elif self.defenseScaredMoves != 0:
-        localDefenseScaredMoves = self.defenseScaredMoves - 1
-
-    # Computes whether we're on defense (1) or offense (0)
-    features['onDefense'] = 1
-    if myState.isPacman: features['onDefense'] = 0  # lower by 100 points to discourage attacking enemy
-
-    # Enemy
-    enemyIndices = self.getOpponents(gameState)
-    invaders = [successor.getAgentState(index) for index in enemyIndices if
-                successor.getAgentState(index).isPacman and successor.getAgentState(index).getPosition() != None]
-
-    minEnemyDist = 0
-    genEnemyDist = 0
-    smallerGenEnemyDist = 0
-    if len(invaders) > 0:
-        minEnemyDist = min([self.getMazeDistance(myPos, enemy.getPosition()) for enemy in invaders])
-    else:
-        if False:
-            gen_dstr = [self.getBeliefDistribution(index) for index in enemyIndices]
-
-            # A
-            a_dist = 0
-            for loc, prob in gen_dstr[0].items():
-                a_dist += prob * self.getMazeDistance(loc, myPos)
-
-            # B
-            b_dist = 0
-            for loc, prob in gen_dstr[1].items():
-                b_dist += prob * self.getMazeDistance(loc, myPos)
-
-            # only pursue the closest gen enemy
-            genEnemyDist = b_dist
-            smallerGenEnemyDist = a_dist
-            if a_dist > b_dist:
-                genEnemyDist = a_dist
-                smallerGenEnemyDist = b_dist
-
-        else:
-          pass
-
-    if localDefenseScaredMoves > 0:
-        # we are scared of our enemies
-        # we are scared of all our enemies
-        if minEnemyDist > 0:
-            # very scared of the closest exact enemy
-            features['exactInvaderDistanceScared'] = minEnemyDist
-
-            # need to get genEnemyDist and smallerEnemyDist
-            # ============================================
-            # gen_dstr = [self.getBeliefDistribution(index) for index in enemyIndices]
-
-            # # A
-            # a_dist = 0
-            # for loc, prob in gen_dstr[0].items():
-            #     a_dist += prob * self.getMazeDistance(loc, myPos)
-
-            # # B
-            # b_dist = 0
-            # for loc, prob in gen_dstr[1].items():
-            #     b_dist += prob * self.getMazeDistance(loc, myPos)
-
-            # # only pursue the closest gen enemy
-            # genEnemyDist = b_dist
-            # smallerGenEnemyDist = a_dist
-            # if a_dist > b_dist:
-            #     genEnemyDist = a_dist
-            #     smallerGenEnemyDist = b_dist
-            # ============================================
-            # otherwise it is already calcualted
-
-        features['generalInvaderDistanceScared'] = genEnemyDist
-        features['smallerGeneralInvaderDistanceScared'] = smallerGenEnemyDist
-
-
-    else:
-        # we want to chase our enemies
-        # we are only interested in chasing the closest enemy
-
-        features['numInvaders'] = len(invaders)
-
-        if minEnemyDist > 0:
-            features['exactInvaderDistance'] = minEnemyDist
-        else:
-            features['generalEnemyDistance'] = genEnemyDist
-
-    # punish staying in the same place
-    if action == Directions.STOP: features['stop'] = 1
-    # punish just doing the reverse
-    rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
-    if action == rev: features['reverse'] = 1
-
-    return features
-
-  def getWeights(self, gameState, action):
-    return {'numInvaders': -1000, 'onDefense': 100, 'stop': -100, 'reverse': -2,
-            'exactInvaderDistance': -3.5, "generalEnemyDistance": -30,
-            'exactInvaderDistanceScared': -1000, 'generalInvaderDistanceScared': -200,
-            'smallerGeneralInvaderDistanceScared': -150}
-
   # evaluation function
   def evaluationFunction(self, gameState, mode = "Attack"):
     # heuristic function to evaluate the state of the game
 
     # if terminal state    
     if gameState.isOver():
-      return gameState.getScore()
+      val = gameState.getScore()
+      return val
     
-    val = 0
-    actions = gameState.getLegalActions(self.index)
-    actions.remove(Directions.STOP)
-    # print("actions = ", actions)
+    TeamFoodCarrying = 0
+    EnemyFoodCarrying = 0
+    # get food carrying of team
+    for i in self.getTeam(gameState):
+      TeamFoodCarrying += gameState.getAgentState(i).numCarrying
+    # get food carrying of enemy
+    for i in self.getOpponents(gameState):
+      EnemyFoodCarrying += gameState.getAgentState(i).numCarrying
+    
+    val = gameState.getScore() * 1000 # score is important
 
-    for action in actions:
-      features = self.getFeatures(gameState, action)
-      weights = self.getWeights(gameState, action)
-      
-      val += features * weights
+    food_carry_val = - EnemyFoodCarrying * 250 # food carrying is important | only care about enemy food carrying
 
-    return val/len(actions)    
+    # the more food an enemy has, the more important it is to eat it
+    food_carry_val = food_carry_val * math.exp(TeamFoodCarrying/10)
+    val += food_carry_val
+
+
+    # check if i am pacman
+    amPac = gameState.getAgentState(self.index).isPacman
+
+    if amPac:
+      val = -1000 # pacman should not be on defense
+      return val
+
+    # distance between starting position and current position
+    start_dist = self.getMazeDistance(self.start, gameState.getAgentPosition(self.index))
+    
+    # find food you are defending
+    foodList = self.getFoodYouAreDefending(gameState).asList()
+
+    # compare self.remainingFoodToDefend and foodList to find out which food was eaten
+    self.last_seen = [i for i in self.remainingFoodToDefend if i not in foodList]
+    
+    # update self.remainingFoodToDefend
+    self.remainingFoodToDefend = foodList
+
+    # chase enemy pacman and eat it
+    enemyList = self.getOpponents(gameState)
+    # check list of enemy pacmans
+    enemyPacList = [gameState.getAgentState(i) for i in enemyList if gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
+    
+    # incentivize eating enemy pacman
+    if len(enemyPacList) > 0:
+      val += 1000 / len(enemyPacList)
+
+    enemy_pos_list = [gameState.getAgentPosition(i) for i in enemyList]
+    # remove None values
+    enemy_pos_list = [i for i in enemy_pos_list if i != None]
+
+    if len(enemy_pos_list) > 0:
+      enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
+      for i in range(len(enemy_dist_list)):
+        # find out how much food enemy has
+        food_carried = gameState.getAgentState(enemyList[i]).numCarrying
+        val -= enemy_dist_list[i] * 100 * math.exp(food_carried/10) # the more food enemy has, the more important it is to eat it
+
+    # move to minimize distance between positions in self and self.last_seen
+    if len(self.last_seen) > 0:
+      last_seen_dist = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in self.last_seen]
+      val -= min(last_seen_dist) * 1000
+
+    if len(enemy_pos_list) == 0 and len(self.last_seen) == 0:
+      # move to centered food
+      defend_food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in self.remainingFoodToDefend]
+      val -= sum(defend_food_dist_list) * 0.5
+ 
+    # return value
+    return val
 
   # setup for minimax
   def getSuccessors(self, gameState, player_ID):
@@ -809,7 +759,7 @@ class DummyDefenseAgent(CaptureAgent):
         
         current_time = time.time()
         if current_time - start_time > time_left - 0.05:
-          return v
+          return v, best_action
         else:
           time_left = time_left - (current_time - start_time)
         
