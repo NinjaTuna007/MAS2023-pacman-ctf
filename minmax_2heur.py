@@ -514,8 +514,13 @@ class DummyDefenseAgent(CaptureAgent):
 
     # to infer position of enemy by tracking food availability
     self.remainingFoodToDefend = self.getFoodYouAreDefending(gameState).asList()
+    self.remainingPowerPillsToDefend = self.getCapsulesYouAreDefending(gameState)
     self.last_seen = []    
     
+    # track previous "values" of states the agent has been in: currently not used
+    self.previousStates = []
+    self.previousActions = []
+    self.previousRewards = []
 
   def getSuccessor(self, gameState, action):
     """
@@ -530,7 +535,7 @@ class DummyDefenseAgent(CaptureAgent):
       return successor
 
   # evaluation function
-  def evaluationFunction(self, gameState, mode = "Attack"):
+  def evaluationFunction(self, gameState):
     # heuristic function to evaluate the state of the game
 
     # if terminal state    
@@ -552,15 +557,19 @@ class DummyDefenseAgent(CaptureAgent):
     food_carry_val = - EnemyFoodCarrying * 250 # food carrying is important | only care about enemy food carrying
 
     # the more food an enemy has, the more important it is to eat it
-    food_carry_val = food_carry_val * math.exp(TeamFoodCarrying/10)
+    food_carry_val = food_carry_val * math.exp(float(TeamFoodCarrying)/5)
     val += food_carry_val
 
 
     # check if i am pacman
     amPac = gameState.getAgentState(self.index).isPacman
 
+    # check if I am scared
+    amScared = gameState.getAgentState(self.index).scaredTimer > 0
+
+
     if amPac:
-      val = -1000 # pacman should not be on defense
+      val = -math.inf # pacman should not be on defense
       return val
 
     # distance between starting position and current position
@@ -569,8 +578,18 @@ class DummyDefenseAgent(CaptureAgent):
     # find food you are defending
     foodList = self.getFoodYouAreDefending(gameState).asList()
 
-    # compare self.remainingFoodToDefend and foodList to find out which food was eaten
-    self.last_seen = [i for i in self.remainingFoodToDefend if i not in foodList]
+    if foodList != self.remainingFoodToDefend:
+      # compare self.remainingFoodToDefend and foodList to find out which food was eaten
+      self.last_seen = [i for i in self.remainingFoodToDefend if i not in foodList]
+
+    pillList = self.getCapsulesYouAreDefending(gameState)
+
+    # if pillList != self.remainingPowerPillsToDefend:
+    #   # compare self.remainingPowerPillsToDefend and pillList to find out which pill was eaten
+    #   eaten_pills = [i for i in self.remainingPowerPillsToDefend if i not in pillList]
+
+    #   # append to last_seen
+    #   self.last_seen += eaten_pills
     
     # update self.remainingFoodToDefend
     self.remainingFoodToDefend = foodList
@@ -578,29 +597,34 @@ class DummyDefenseAgent(CaptureAgent):
     # chase enemy pacman and eat it
     enemyList = self.getOpponents(gameState)
     # check list of enemy pacmans
-    enemyPacList = [gameState.getAgentState(i) for i in enemyList if gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
+    enemyPacList = [i for i in enemyList if gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
     
+
     # incentivize eating enemy pacman
-    if len(enemyPacList) > 0:
-      val += 1000 / len(enemyPacList)
+    if True or len(enemyPacList) > 0 and not amScared:
+      val += 10000 / (len(enemyPacList) + 1)
 
-    enemy_pos_list = [gameState.getAgentPosition(i) for i in enemyList]
-    # remove None values
-    enemy_pos_list = [i for i in enemy_pos_list if i != None]
+    enemy_pos_list = [gameState.getAgentPosition(i) for i in enemyPacList] # already filtered out None positions in enemyPacList
 
-    if len(enemy_pos_list) > 0:
+    if len(enemy_pos_list) > 0 and not amScared:
       enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
       for i in range(len(enemy_dist_list)):
         # find out how much food enemy has
         food_carried = gameState.getAgentState(enemyList[i]).numCarrying
         val -= enemy_dist_list[i] * 100 * math.exp(food_carried/10) # the more food enemy has, the more important it is to eat it
 
+    if len(enemy_pos_list) > 0 and amScared:
+      enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
+      for i in range(len(enemy_dist_list)):
+        # find out how much food enemy has
+        val += enemy_dist_list[i] * 250
+
     # move to minimize distance between positions in self and self.last_seen
-    if len(self.last_seen) > 0:
+    if len(self.last_seen) > 0 and not amScared:
       last_seen_dist = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in self.last_seen]
       val -= min(last_seen_dist) * 1000
 
-    if len(enemy_pos_list) == 0 and len(self.last_seen) == 0:
+    if len(enemy_pos_list) == 0 and len(self.last_seen) == 0 and not amScared:
       # move to centered food
       defend_food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in self.remainingFoodToDefend]
       val -= sum(defend_food_dist_list) * 0.5
