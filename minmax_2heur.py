@@ -103,7 +103,7 @@ class DummyAttackAgent(CaptureAgent):
       return successor
 
   # evaluation function
-  def evaluationFunction(self, gameState, mode = "Attack"):
+  def evaluationFunction(self, gameState):
     # heuristic function to evaluate the state of the game
 
     # if terminal state    
@@ -163,21 +163,27 @@ class DummyAttackAgent(CaptureAgent):
       if len(enemy_pos_list) > 0:
         enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
         for i in range(len(enemy_dist_list)):
-          val += 100/enemy_dist_list[i]
-      
+          # find if this enemy is a pacman
+          if gameState.getAgentState(self.index).isPacman:
+            val += 100/enemy_dist_list[i]
+            # don't take enemy ghost into account
+          
       # return value
       return val
 
 
     else: # if i am pacman, i.e., i am on the other side
 
-      val += self.cross_dist + 100 # to ensure value doesn't fall when pacman is on the other side
+      if start_dist >= self.cross_dist:
+        val += self.cross_dist + 100 # to ensure value doesn't fall when pacman is on the other side
 
       # check how much food i have in my stomach
       foodCarrying = gameState.getAgentState(self.index).numCarrying
       # if enough food in my stomach, go back to my side
       
       if foodCarrying > 0:
+        dist_to_opp_start = self.getMazeDistance(gameState.getAgentPosition(self.index), self.opponent_start)
+        val += dist_to_opp_start
         pass # need to figure this out properly
 
       # run away from enemy ghosts
@@ -189,7 +195,13 @@ class DummyAttackAgent(CaptureAgent):
       if len(enemyGhostPosList) > 0:
         enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
         for i in range(len(enemyGhostDistList)):
-          val += enemyGhostDistList[i] * 100
+          # find if this ghost is scared
+          if enemyGhostList[i].scaredTimer > 0:
+            val -= enemyGhostDistList[i] * 100
+          else:
+            val += enemyGhostDistList[i] * 100
+
+          val += 1000/(len(enemyGhostDistList) + 1)
 
       # find food and eat it
       foodList = self.getFood(gameState).asList()
@@ -198,7 +210,19 @@ class DummyAttackAgent(CaptureAgent):
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
         # find closest food
         closest_food_dist = min(food_dist_list)
-        val += 50/closest_food_dist
+        val += 100/closest_food_dist
+
+        for i in range(len(food_dist_list)):
+          val += 50/food_dist_list[i]
+
+      # find capsules and eat them
+      capsuleList = self.getCapsules(gameState)
+      val += 10000/(len(capsuleList) + 1)
+
+      for i in range(len(capsuleList)):
+        val -= self.getMazeDistance(gameState.getAgentPosition(self.index), capsuleList[i])
+
+
 
       # check list of enemy ghosts
       enemyList = self.getOpponents(gameState)
@@ -211,7 +235,7 @@ class DummyAttackAgent(CaptureAgent):
         for i in range(len(enemyGhostDistList)):
           val += enemyGhostDistList[i] * 100
 
-        val -= start_dist * 2 # if enemy ghost is close, pacman should try to go back to its side
+        val -= start_dist * 20 # if enemy ghost is close, pacman should try to go back to its side
 
 
 
