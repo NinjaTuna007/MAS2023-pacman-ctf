@@ -90,6 +90,11 @@ class DummyAttackAgent(CaptureAgent):
     # find symmetric start position of opponent
     self.opponent_start = (gameState.data.layout.width - 1 - self.start[0], gameState.data.layout.height - 1 - self.start[1])
 
+    self.heurvalue_dict = {}
+    self.max_agent_dict = {}
+    self.min_agent_dict = {}
+
+
   def getSuccessor(self, gameState, action):
     """
     Finds the next successor which is a grid position (location tuple).
@@ -111,6 +116,11 @@ class DummyAttackAgent(CaptureAgent):
       val = gameState.getScore()
       return val
     
+    # check hash
+    hash_value = hash(gameState)
+    if False and hash_value in self.heurvalue_dict:
+      return self.heurvalue_dict[hash_value]
+
     TeamFoodCarrying = 0
     EnemyFoodCarrying = 0
     # get food carrying of team
@@ -155,7 +165,7 @@ class DummyAttackAgent(CaptureAgent):
       # incentivize eating enemy pacman if we are not scared
       amScared = gameState.getAgentState(self.index).scaredTimer > 0
       if len(enemyPacList) > 0 and not amScared:
-        val += 100 / len(enemyPacList)
+        val += 1000 / len(enemyPacList)
 
       enemyList = [gameState.getAgentPosition(i) for i in enemyList]
       # remove None values
@@ -168,7 +178,9 @@ class DummyAttackAgent(CaptureAgent):
           if gameState.getAgentState(self.index).isPacman:
             val += 100/enemy_dist_list[i]
             # don't take enemy ghost into account
-          
+
+      # add to dict
+      self.heurvalue_dict[hash_value] = val    
       # return value
       return val
 
@@ -184,8 +196,11 @@ class DummyAttackAgent(CaptureAgent):
       
       if foodCarrying > 0:
         dist_to_opp_start = self.getMazeDistance(gameState.getAgentPosition(self.index), self.opponent_start)
-        val += dist_to_opp_start * 10
-        pass # need to figure this out properly
+
+        # have weight for food carrying: start at 0, grow to 5 as food carrying increases
+        food_weight = foodCarrying / 2 # todo: can fine tune this
+
+        val -= 1000 * food_weight /dist_to_opp_start # want to go back to my side 
 
       # run away from enemy ghosts
       enemyList = self.getOpponents(gameState)
@@ -249,7 +264,8 @@ class DummyAttackAgent(CaptureAgent):
 
 
 
-
+    # add to dict
+    self.heurvalue_dict[hash_value] = val
     return val
 
   # setup for minimax
@@ -279,6 +295,14 @@ class DummyAttackAgent(CaptureAgent):
     if depth == 0:
       return self.evaluationFunction(gameState), None
     
+    # hash (gameState, agent_ID, depth) and store (value, action) associated with this in a dictionary
+    hash_val = hash((gameState, agent_ID, depth))
+    # check if this hash already exists in the dictionary
+    if hash_val in self.max_agent_dict:
+      return self.max_agent_dict[hash_val]
+
+
+
     if total_compute_time < 0.001:
       # scream not enough time
       return -math.inf, None
@@ -309,7 +333,7 @@ class DummyAttackAgent(CaptureAgent):
       # check if time is up
       current_time = time.time()
       if current_time - start_time > total_compute_time:
-        return v, best_action
+        return -math.inf, None
         # time_left = time_left - (current_time - start_time)
 
       # check if enemy is visible from the successor state
@@ -380,14 +404,26 @@ class DummyAttackAgent(CaptureAgent):
           best_action = action
 
       if v >= beta:
+        # add to dictionary
+        self.max_agent_dict[hash_val] = (v, best_action)
+        
         return v, best_action
       alpha = max(alpha, v)
+    
+    # add to dictionary if the value is not -inf
+    if v != -math.inf:
+      self.max_agent_dict[hash_val] = (v, best_action)
     return v, best_action
   
   def min_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
     if depth == 0:
       return self.evaluationFunction(gameState), None
-    
+
+    hash_val = hash((gameState, agent_ID, depth))
+    # check if this hash already exists in the dictionary
+    if hash_val in self.min_agent_dict:
+      return self.min_agent_dict[hash_val]
+
     if total_compute_time < 0.0001:
       # scream not enough time
       return math.inf, None
@@ -417,7 +453,7 @@ class DummyAttackAgent(CaptureAgent):
         
         current_time = time.time()
         if current_time - start_time > total_compute_time:
-          return v, best_action
+          return math.inf, None
           # total_compute_time = total_compute_time - (current_time - start_time)
         
         # check if enemy is visible from the successor state
@@ -489,8 +525,14 @@ class DummyAttackAgent(CaptureAgent):
             best_action = action
   
         if v <= alpha:
+          # add to dictionary
+          self.min_agent_dict[hash_val] = (v, best_action)
           return v, best_action
         beta = min(beta, v)
+    
+    # add to dictionary if the value is not inf
+    if v != math.inf:
+      self.min_agent_dict[hash_val] = (v, best_action)
     return v, best_action
 
   def chooseAction(self, gameState):
@@ -503,12 +545,17 @@ class DummyAttackAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    depth_list = [2, 4, 7] # best IDS Scenario
-    # depth_list = [5] # no IDS for now 
+    depth_list = [2, 5, 7, 10] # best IDS Scenario
+    # depth_list = [10] # no IDS for now 
 
-    total_compute_time = 0.999 # time left for the agent to choose an action
+    total_compute_time = 0.995 # time left for the agent to choose an action
 
     depth_act_dict = {}
+
+    # reset dictionaries
+    self.min_agent_dict = {}
+    self.max_agent_dict = {}
+    self.heurvalue_dict = {}
 
     # iteratively deepening search
     start_time = time.time()
@@ -530,7 +577,7 @@ class DummyAttackAgent(CaptureAgent):
 
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:
-      print("Offense is Random")
+      # print("Offense is Random")
       return random.choice(actions)
     else:
       # choose action with highest depth
@@ -538,8 +585,8 @@ class DummyAttackAgent(CaptureAgent):
       best_action = depth_act_dict[best_depth]
 
       # print time taken for agent to choose action
-      print("Time taken by Offense = ", time.time() - start_time)
-      print("best_depth = ", best_depth)
+      # print("Time taken by Offense = ", time.time() - start_time)
+      # print("best_depth = ", best_depth)
 
       return best_action    
 
@@ -589,8 +636,8 @@ class DummyDefenseAgent(CaptureAgent):
     self.last_seen = []    
   
     self.heurvalue_dict = {}
-    self.max_val_dict = {} # dictionary to store hash, value
-    self.min_val_dict = {} # dictionary to store hash, value.
+    self.max_agent_dict = {} # dictionary to store hash, value
+    self.min_agent_dict = {} # dictionary to store hash, value.
 
   def getSuccessor(self, gameState, action):
     """
@@ -613,7 +660,10 @@ class DummyDefenseAgent(CaptureAgent):
       val = gameState.getScore()
       return val
     
-
+    # check if gameState is in dictionary
+    hash_val = hash(gameState)
+    if False and hash_val in self.heurvalue_dict:
+      return self.heurvalue_dict[hash_val]
 
     TeamFoodCarrying = 0
     EnemyFoodCarrying = 0
@@ -641,7 +691,11 @@ class DummyDefenseAgent(CaptureAgent):
 
 
     if amPac:
-      val = -math.inf # pacman should not be on defense
+      val = -1000000 # pacman should not be on defense
+
+
+      # add hash of gameState to dictionary
+      self.heurvalue_dict[hash_val] = val
       return val
 
     # distance between starting position and current position
@@ -700,7 +754,9 @@ class DummyDefenseAgent(CaptureAgent):
       # move to centered food
       defend_food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in self.remainingFoodToDefend]
       val -= sum(defend_food_dist_list) * 0.5
- 
+  
+    # add hash of gameState to dictionary
+    self.heurvalue_dict[hash_val] = val  
     # return value
     return val
 
@@ -725,12 +781,18 @@ class DummyDefenseAgent(CaptureAgent):
       successor = gameState.generateSuccessor(player_ID, action)
       successors.append((successor, action))
     return successors
+
   def max_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
     
     if depth == 0:
       return self.evaluationFunction(gameState), None
     
-    # hash gameState, agent_ID, depth and store value associated with this in a dictionary.
+    # hash (gameState, agent_ID, depth) and store (value, action) associated with this in a dictionary
+    hash_val = hash((gameState, agent_ID, depth))
+    # check if this hash already exists in the dictionary
+    if hash_val in self.max_agent_dict:
+      return self.max_agent_dict[hash_val]
+
 
 
     if total_compute_time < 0.001:
@@ -763,7 +825,7 @@ class DummyDefenseAgent(CaptureAgent):
       # check if time is up
       current_time = time.time()
       if current_time - start_time > total_compute_time:
-        return v, best_action
+        return -math.inf, None
         # time_left = time_left - (current_time - start_time)
 
       # check if enemy is visible from the successor state
@@ -834,14 +896,25 @@ class DummyDefenseAgent(CaptureAgent):
           best_action = action
 
       if v >= beta:
+        # add to dictionary
+        self.max_agent_dict[hash_val] = (v, best_action)
         return v, best_action
       alpha = max(alpha, v)
+    
+    # add to dictionary if the value is not -inf
+    if v != -math.inf:
+      self.max_agent_dict[hash_val] = (v, best_action)
     return v, best_action
   
   def min_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
     if depth == 0:
       return self.evaluationFunction(gameState), None
-    
+
+    hash_val = hash((gameState, agent_ID, depth))
+    # check if this hash already exists in the dictionary
+    if hash_val in self.min_agent_dict:
+      return self.min_agent_dict[hash_val]
+
     if total_compute_time < 0.0001:
       # scream not enough time
       return math.inf, None
@@ -871,7 +944,7 @@ class DummyDefenseAgent(CaptureAgent):
         
         current_time = time.time()
         if current_time - start_time > total_compute_time:
-          return v, best_action
+          return math.inf, None
           # total_compute_time = total_compute_time - (current_time - start_time)
         
         # check if enemy is visible from the successor state
@@ -943,8 +1016,14 @@ class DummyDefenseAgent(CaptureAgent):
             best_action = action
   
         if v <= alpha:
+          # add to dictionary
+          self.min_agent_dict[hash_val] = (v, best_action)
           return v, best_action
         beta = min(beta, v)
+    
+    # add to dictionary if the value is not inf
+    if v != math.inf:
+      self.min_agent_dict[hash_val] = (v, best_action)
     return v, best_action
 
   def chooseAction(self, gameState):
@@ -957,12 +1036,18 @@ class DummyDefenseAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    depth_list = [3, 5, 7] # best IDS Scenario
-    # depth_list = [5] # no IDS for now 
+    depth_list = [2, 5, 7, 10] # best IDS Scenario
+    # depth_list = [10] # no IDS for now 
 
-    total_compute_time = 0.999 # time left for the agent to choose an action
+    total_compute_time = 0.995 # time left for the agent to choose an action
 
     depth_act_dict = {}
+
+    # reset dictionaries
+    self.max_agent_dict = {}
+    self.min_agent_dict = {}
+    self.heurvalue_dict = {}
+
 
     # iteratively deepening search
     start_time = time.time()
@@ -984,7 +1069,8 @@ class DummyDefenseAgent(CaptureAgent):
 
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:
-      print("Defense is Random")
+      # print("Time taken by Defense = ", time.time() - start_time)
+      # print("Defense is Random")
       return random.choice(actions)
     else:
       # choose action with highest depth
@@ -992,7 +1078,7 @@ class DummyDefenseAgent(CaptureAgent):
       best_action = depth_act_dict[best_depth]
 
       # print time taken for agent to choose action
-      print("Time taken by Defense = ", time.time() - start_time)
+      # print("Time taken by Defense = ", time.time() - start_time)
       # print("best_depth = ", best_depth)
 
       return best_action    
