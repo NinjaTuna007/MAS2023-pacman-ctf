@@ -135,7 +135,7 @@ class DummyAttackAgent(CaptureAgent):
     food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * 250 # food carrying is important
 
     # decay factor for food carrying: want to make depositing food more important as amount of carried food increases
-    food_carry_val = food_carry_val * math.exp(-TeamFoodCarrying/10)
+    food_carry_val = food_carry_val * (math.exp(-TeamFoodCarrying/5) + 0.1)
 
     val += food_carry_val
 
@@ -166,19 +166,17 @@ class DummyAttackAgent(CaptureAgent):
       amScared = gameState.getAgentState(self.index).scaredTimer > 0
       if len(enemyPacList) > 0 and not amScared:
         val += 1000 / len(enemyPacList)
-      #   elif len(enemyPacList)==0 and not amScared:
+      elif len(enemyPacList) == 0 and amScared:
+        val += 500 * len(enemyPacList)
 
-      enemyList = [gameState.getAgentPosition(i) for i in enemyList]
       # remove None values
-      enemy_pos_list = [i for i in enemyList if i != None]
+      enemy_pos_list = [i.getPosition() for i in enemyPacList if i.getPosition() != None]
 
       if len(enemy_pos_list) > 0:
         enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
         for i in range(len(enemy_dist_list)):
           # find if this enemy is a pacman
-          if gameState.getAgentState(self.index).isPacman:
-            val += 100/enemy_dist_list[i]
-            # don't take enemy ghost into account
+          val += 100/enemy_dist_list[i]
 
       # add to dict
       self.heurvalue_dict[hash_value] = val    
@@ -195,14 +193,11 @@ class DummyAttackAgent(CaptureAgent):
       foodCarrying = gameState.getAgentState(self.index).numCarrying
       # if enough food in my stomach, go back to my side
       
-      if foodCarrying > 0:
-        dist_to_opp_start = self.getMazeDistance(gameState.getAgentPosition(self.index), self.opponent_start)
-
-        # have weight for food carrying: start at 0, grow to 5 as food carrying increases
-        food_weight =1 # foodCarrying / 2 # todo: can fine tune this
-
-        val -= 1000 * food_weight /dist_to_opp_start # want to go back to my side 
-
+      dist_to_opp_start = self.getMazeDistance(gameState.getAgentPosition(self.index), self.opponent_start)
+      
+      # have weight for food carrying: start at 0, grow to  as food carrying increases
+      return_desire = (foodCarrying/2) 
+      
       # run away from enemy ghosts
       enemyList = self.getOpponents(gameState)
       enemyGhostList = [gameState.getAgentState(i) for i in enemyList if not gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
@@ -218,16 +213,32 @@ class DummyAttackAgent(CaptureAgent):
           # find if this ghost is scared
           if enemyGhostList[i].scaredTimer > 0:
             found_scared = True
-            val -= enemyGhostDistList[i] * 100
-          else:
-            val += enemyGhostDistList[i] * 100
+            # remaining scared moves
+            scared_moves = enemyGhostList[i].scaredTimer
+            # number of moves to eat enemy ghost
+            num_moves = enemyGhostDistList[i] * 2
+            # if pacman can eat ghost, then eat it
+            if scared_moves > num_moves:
+              val -= enemyGhostDistList[i] * 10
+            else:
+              val -= 100 / enemyGhostDistList[i]
 
-        val += 1000/(len(enemyGhostDistList) + 1)
+        
 
       # in case only un-scared ghosts are present
       if not found_scared and found_ghosts:
-        dist_to_opp_start = self.getMazeDistance(gameState.getAgentPosition(self.index), self.opponent_start)
-        val += dist_to_opp_start * 20 # if enemy ghost is close, pacman should try to go back to its side
+        # dist_to_opp_start = self.getMazeDistance(gameState.getAgentPosition(self.index), self.opponent_start)
+        # minimum distance to enemy ghost
+        min_dist = min(enemyGhostDistList)
+        return_desire += 5 / min_dist
+      
+      val -= 1000 * (return_desire) / dist_to_opp_start # if enemy ghost is close, pacman should try to go back to its side
+
+      # val -= 500 / math.pow(dist_to_opp_start, return_desire/5 + 1) # if enemy ghost is close, pacman should try to go back to its side
+
+      if found_scared and found_ghosts:
+        # in this case, pacman should try to eat the scared ghost
+        val += 1000 / (len(enemyGhostDistList) + 1)
 
 
       # find food and eat it
@@ -237,17 +248,17 @@ class DummyAttackAgent(CaptureAgent):
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
         # find closest food
         closest_food_dist = min(food_dist_list)
-        val += 100/closest_food_dist
+        # val += 100/closest_food_dist
 
         for i in range(len(food_dist_list)):
           val += 50/food_dist_list[i]
 
       # find capsules and eat them
       capsuleList = self.getCapsules(gameState)
-      val += 10000/(len(capsuleList) + 1)
+      val += 100/(len(capsuleList) + 1)
 
       for i in range(len(capsuleList)):
-        val += 1000 / self.getMazeDistance(gameState.getAgentPosition(self.index), capsuleList[i])
+        val += 100 / self.getMazeDistance(gameState.getAgentPosition(self.index), capsuleList[i])
 
 
 
@@ -547,7 +558,7 @@ class DummyAttackAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    depth_list = [2, 5, 7, 10] # best IDS Scenario
+    depth_list = [6, 8, 10] # best IDS Scenario
     # depth_list = [10] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
@@ -694,8 +705,10 @@ class DummyDefenseAgent(CaptureAgent):
 
 
     if amPac:
-      val = -1000000 # pacman should not be on defense
 
+      dist_to_opp_start = self.getMazeDistance(gameState.getAgentPosition(self.index), self.opponent_start)
+
+      val = -500000 / (dist_to_opp_start) # distance to opponent start is important
 
       # add hash of gameState to dictionary
       self.heurvalue_dict[hash_val] = val
@@ -745,13 +758,15 @@ class DummyDefenseAgent(CaptureAgent):
     if len(enemy_pos_list) > 0 and amScared:
       enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
       for i in range(len(enemy_dist_list)):
-        # find out how much food enemy has
         val += enemy_dist_list[i] * 250
 
     # move to minimize distance between positions in self and self.last_seen
     if len(self.last_seen) > 0 and not amScared:
       last_seen_dist = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in self.last_seen]
-      val -= min(last_seen_dist) * 1000
+      val -= min(last_seen_dist) * 100
+
+      if min(last_seen_dist) < 3:
+        self.last_seen = []
 
     if len(enemy_pos_list) == 0 and len(self.last_seen) == 0 and not amScared:
       # move to centered food
@@ -1039,7 +1054,7 @@ class DummyDefenseAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    depth_list = [2, 5, 7, 10] # best IDS Scenario
+    depth_list = [6, 8, 10] # best IDS Scenario
     # depth_list = [10] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
