@@ -456,8 +456,10 @@ class HybridAgent( OffensiveReflexAgent):
         noisyDistance = [noisyDistance[i] for i in self.getOpponents(gameState)]      
         # get closest enemy
         closestEnemy = min(noisyDistance)
+        # print("noisy distance was "+ str(closestEnemy))
         if gameState.getAgentState(self.index).scaredTimer > 0:
           features['noisyEnemyDistanceScaredGhost'] = closestEnemy
+          
         else: # not scared
           features['noisyEnemyDistance'] = closestEnemy
 
