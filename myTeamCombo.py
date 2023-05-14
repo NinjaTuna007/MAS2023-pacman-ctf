@@ -555,7 +555,7 @@ class DummyAttackAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    depth_list = [2, 5, 7, 10] # best IDS Scenario
+    depth_list = [5, 8, 10] # best IDS Scenario
     # depth_list = [10] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
@@ -1039,7 +1039,7 @@ class DummyDefenseAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    depth_list = [2, 5, 7, 10] # best IDS Scenario
+    depth_list = [5, 8, 10] # best IDS Scenario
     # depth_list = [10] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
