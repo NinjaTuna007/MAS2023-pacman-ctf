@@ -224,7 +224,7 @@ class DummyAttackAgent(CaptureAgent):
             for i in range(len(enemyGhostDistList)):
                 val += enemyGhostDistList[i] * 100
         else:
-          val -= enemyGhostDistList[i] * 100
+          val -=  1000 / min(enemyGhostDistList)
       
       #--------------------------------------------------------------------------------
       
@@ -238,16 +238,17 @@ class DummyAttackAgent(CaptureAgent):
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
 
         # if there are capsules
+        val += 1000 / (len(capsuleList) + 1)
         if len(capsuleList) > 0:
             capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
             closest_capsule_dist = min(capsule_dist_list)
-        else: closest_capsule_dist = math.inf
+            val += 100/closest_capsule_dist
         
         # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
 
         # find closest food
         closest_food_dist = min(food_dist_list)
-        closest_food_dist = min(closest_food_dist, closest_capsule_dist)
+        # closest_food_dist = min(closest_food_dist, closest_capsule_dist)
         val += 50/closest_food_dist
 
       # check list of enemy ghosts
