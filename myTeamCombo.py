@@ -295,12 +295,12 @@ class DummyAttackAgent(CaptureAgent):
       successors.append((successor, action))
     return successors
   
-  def max_agent(self, gameState, agent_ID, depth, time_left = math.inf, alpha = -math.inf, beta = math.inf):
+  def max_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
     
     if depth == 0:
       return self.evaluationFunction(gameState), None
     
-    if time_left < 0.05:
+    if total_compute_time < 0.001:
       # scream not enough time
       return -math.inf, None
     
@@ -329,10 +329,9 @@ class DummyAttackAgent(CaptureAgent):
       
       # check if time is up
       current_time = time.time()
-      if current_time - start_time > time_left:
+      if current_time - start_time > total_compute_time:
         return v, best_action
-      else:
-        time_left = time_left - (current_time - start_time)
+        # time_left = time_left - (current_time - start_time)
 
       # check if enemy is visible from the successor state
       enemy_indices = opponent_team
@@ -372,7 +371,14 @@ class DummyAttackAgent(CaptureAgent):
       if enemy_conf != None:
         # print("ENEMY IS MOVING")
         # log distance to enemy
+        current_time = time.time()
+        time_left = total_compute_time - (current_time - start_time)
         act_value,_ = self.min_agent(successor, enemy_ID, depth-1, time_left, alpha, beta)
+
+        # check if min agent ran out of time
+        if act_value == math.inf:
+          # return v, best_action
+          return -math.inf, None
 
         if act_value > v:
           v = act_value
@@ -380,7 +386,15 @@ class DummyAttackAgent(CaptureAgent):
         
       else:
         # if enemy is not visible, then assume board remains the same and make next move
+        current_time = time.time()
+        time_left = total_compute_time - (current_time - start_time)
         act_value,_ = self.max_agent(successor, agent_ID, depth-1, time_left, alpha, beta)
+
+        # check if max agent ran out of time
+        if act_value == -math.inf:
+          # return v, best_action
+          return -math.inf, None
+
 
         if act_value > v:
           v = act_value
@@ -391,11 +405,11 @@ class DummyAttackAgent(CaptureAgent):
       alpha = max(alpha, v)
     return v, best_action
   
-  def min_agent(self, gameState, agent_ID, depth, time_left = math.inf, alpha = -math.inf, beta = math.inf):
+  def min_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
     if depth == 0:
       return self.evaluationFunction(gameState), None
     
-    if time_left < 0.05:
+    if total_compute_time < 0.0001:
       # scream not enough time
       return math.inf, None
     
@@ -423,10 +437,9 @@ class DummyAttackAgent(CaptureAgent):
     for successor, action in successor_list:
         
         current_time = time.time()
-        if current_time - start_time > time_left - 0.05:
+        if current_time - start_time > total_compute_time:
           return v, best_action
-        else:
-          time_left = time_left - (current_time - start_time)
+          # total_compute_time = total_compute_time - (current_time - start_time)
         
         # check if enemy is visible from the successor state
         enemy_indices = opponent_team
@@ -466,7 +479,15 @@ class DummyAttackAgent(CaptureAgent):
 
           
         if enemy_conf != None:
+          current_time = time.time()
+          time_left = total_compute_time - (current_time - start_time)
           act_value,_ = self.max_agent(successor, enemy_ID, depth-1, time_left, alpha, beta)
+
+          # check if max agent ran out of time
+          if act_value == -math.inf:
+            # return v, best_action
+            return math.inf, None
+
 
           if act_value < v:
             v = act_value
@@ -474,7 +495,15 @@ class DummyAttackAgent(CaptureAgent):
         
         else:
           # if enemy is not visible, then assume board remains the same and make next move
+          current_time = time.time()
+          time_left = total_compute_time - (current_time - start_time)
           act_value,_ = self.min_agent(successor, agent_ID, depth-1, time_left, alpha, beta)
+
+          # check if min agent ran out of time
+          if act_value == math.inf:
+            # return v, best_action
+            return math.inf, None
+
 
           if act_value < v:
             v = act_value
@@ -484,9 +513,8 @@ class DummyAttackAgent(CaptureAgent):
           return v, best_action
         beta = min(beta, v)
     return v, best_action
-  
+
   def chooseAction(self, gameState):
-    timeStart = time.time()
     """
     Picks among actions randomly.
     """
@@ -496,10 +524,10 @@ class DummyAttackAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    # depth_list = [4, 6, 8]
-    depth_list = [3] # no IDS for now
+    depth_list = [2, 4, 7] # best IDS Scenario
+    # depth_list = [5] # no IDS for now 
 
-    time_left = 0.95 # time left for the agent to choose an action
+    total_compute_time = 0.999 # time left for the agent to choose an action
 
     depth_act_dict = {}
 
@@ -507,8 +535,12 @@ class DummyAttackAgent(CaptureAgent):
     start_time = time.time()
 
     for depth in depth_list:
+      # time bookkeeping      
       current_time = time.time()
-      if current_time - start_time > time_left:
+      time_spent = current_time - start_time
+      time_left = total_compute_time - time_spent
+
+      if time_left < 0.001:
         break
       
       v, best_action = self.max_agent(gameState, self.index, depth, time_left)
@@ -516,6 +548,9 @@ class DummyAttackAgent(CaptureAgent):
         depth_act_dict[depth] = best_action
       else:
         break
+
+
+
 
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:
@@ -541,7 +576,7 @@ class DummyAttackAgent(CaptureAgent):
 
         # choose a random action
         # best_action = random.choice(actions)
-      print("time taken = ", time.time() - timeStart)
+    #   print("time taken = ", time.time() - timeStart)
       return best_action    
 
 
