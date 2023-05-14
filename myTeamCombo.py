@@ -118,7 +118,7 @@ class DummyAttackAgent(CaptureAgent):
     EnemyFoodCarrying = 0
     
     # bool, for when pacman should deposit food
-    self.isFull = gameState.getAgentState(self.index).numCarrying >= 5
+    self.isFull = gameState.getAgentState(self.index).numCarrying >= 5 # todo
 
     # get food carrying of team
     for i in self.getTeam(gameState):
@@ -210,8 +210,8 @@ class DummyAttackAgent(CaptureAgent):
         for i, indexEnemy in enumerate(enemyGhostDistList):
           if gameState.getAgentState(i).scaredTimer > enemyGhostDistList[i]:
             enemyScaredList.append(True)
-        else:
-          enemyScaredList.append(False)
+          else:
+            enemyScaredList.append(False)
 
         # if no enemy ghosts are scared, then run away
         if not any(enemyScaredList):
@@ -236,7 +236,8 @@ class DummyAttackAgent(CaptureAgent):
             capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
             closest_capsule_dist = min(capsule_dist_list)
         else: closest_capsule_dist = math.inf
-            
+        
+        # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
 
         # find closest food
         closest_food_dist = min(food_dist_list)
@@ -485,6 +486,7 @@ class DummyAttackAgent(CaptureAgent):
     return v, best_action
   
   def chooseAction(self, gameState):
+    timeStart = time.time()
     """
     Picks among actions randomly.
     """
@@ -533,11 +535,13 @@ class DummyAttackAgent(CaptureAgent):
                 best_action = depth_act_dict[depth]
                 break
         if best_action == Directions.STOP:
+            # remove stop from actions
+            # actions.remove(Directions.STOP)
             best_action = random.choice(actions)
 
         # choose a random action
         # best_action = random.choice(actions)
-
+      print("time taken = ", time.time() - timeStart)
       return best_action    
 
 
