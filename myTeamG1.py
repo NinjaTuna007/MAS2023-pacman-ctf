@@ -36,12 +36,58 @@ from capture import COLLISION_TOLERANCE, GameState
 from captureAgents import CaptureAgent
 from distanceCalculator import manhattanDistance
 from game import Directions
-from models import CNNPolicy
 
 #################
 # Team creation #
 #################
 T = TypeVar("T")
+import torch
+import torch.nn as nn
+
+
+class SimpleModel(nn.Module):
+    def __init__(
+        self, observation_size: int, action_size: int, hidden_size: int = 64
+    ) -> None:
+        super().__init__()
+        self.observation_size = observation_size
+        self.action_size = action_size
+        self.hidden_size = hidden_size
+
+        self.fc1 = nn.Linear(self.observation_size, self.hidden_size)
+        self.fc2 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.fc3 = nn.Linear(self.hidden_size, self.action_size)
+        self.relu = nn.ReLU()
+
+    def forward(self, x: torch.Tensor):
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+
+class CNNPolicy(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1)
+        # add average pooling layer
+        self.maxpool = nn.MaxPool2d(2)
+        self.relu = nn.ReLU()
+        self.fc = nn.Linear(84, 5)
+
+    def forward(self, observation: torch.Tensor):
+        x = self.relu(self.conv1(observation))
+        x = self.maxpool(x)
+        x = self.relu(self.conv2(x))
+        x = self.maxpool(x)
+        x = self.relu(self.conv3(x))
+        x = self.maxpool(x)
+        x = torch.mean(x, dim=1)
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        return x
 
 
 @dataclass
@@ -116,7 +162,7 @@ def createTeam(
     firstIndex,
     secondIndex,
     isRed,
-    first="NNPLayingAgent",
+    first="NNPlayingAgent",
     second="NNPlayingAgent",
     numTraining=0,
 ):
@@ -261,10 +307,10 @@ class NNTrainingAgent(CaptureAgent):
         # if self.episode_number % self.plot_frequency == 0:
         #     self.plot_loss()
         if self.episode_number % self.update_target_frequency == 0:
-            print("Updating target network")
+            # print("Updating target network")
             self.target.load_state_dict(self.policy.state_dict())
-        print("wins: " + str(self.wins) + " out of " + str(self.episode_number))
-        print("Episode number: " + str(self.episode_number))
+        # print("wins: " + str(self.wins) + " out of " + str(self.episode_number))
+        # print("Episode number: " + str(self.episode_number))
         self.refdefensiveagent.registerInitialState(gameState)
         self.refoffensiveagent.registerInitialState(gameState)
         CaptureAgent.registerInitialState(self, gameState)
@@ -702,9 +748,10 @@ class NNTrainingAgent(CaptureAgent):
                         # The powered up enemy pacman killed us!
                         reward = -1
         if reward != 0:
-            print(
-                "sdlfsdfksdjfsjfskldfjsdklfjskdlfjsdkfjskdlfjksdjfksdjfklsdjfjklsdjfklsdjfkjsdfkjsd"
-            )
+            # print(
+            #     "sdlfsdfksdjfsjfskldfjsdklfjskdlfjsdkfjskdlfjksdjfksdjfklsdjfjklsdjfklsdjfkjsdfkjsd"
+            # )
+            pass
         return reward
 
 
@@ -715,11 +762,13 @@ class NNPlayingAgent(CaptureAgent):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cpu")
         self.action_numbers = {"North": 0, "South": 1, "East": 2, "West": 3, "Stop": 4}
         self.action_names = {v: k for k, v in self.action_numbers.items()}
         self.policy = CNNPolicy().to(self.device)
-        self.policy.load_state_dict(torch.load("./policy_2000.pt"))
+        self.policy.load_state_dict(
+            torch.load("./policy_2000.pt", map_location=self.device)
+        )
 
     def registerInitialState(self, gameState: GameState):
         """
@@ -846,7 +895,9 @@ class NNPlayingAgent(CaptureAgent):
     def chooseAction(self, gameState: GameState):
         observation = self.convert_gamestate(gameState)
         upscaled_observation = self.upscale_matrix(observation, desired_size=(64, 128))
-
+        # plt.imshow(upscaled_observation)
+        # plt.imsave("test.png", upscaled_observation)
+        # plt.show()
         action = self.policy(
             torch.tensor(upscaled_observation)
             .permute(2, 0, 1)

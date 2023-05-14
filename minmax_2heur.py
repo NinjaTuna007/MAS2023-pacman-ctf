@@ -89,13 +89,10 @@ class DummyAttackAgent(CaptureAgent):
 
     # find symmetric start position of opponent
     self.opponent_start = (gameState.data.layout.width - 1 - self.start[0], gameState.data.layout.height - 1 - self.start[1])
-    self.isFull = False
 
-    # reset dictionaries
-    self.min_agent_dict = {}
-    self.max_agent_dict = {}
     self.heurvalue_dict = {}
-
+    self.max_agent_dict = {}
+    self.min_agent_dict = {}
 
 
   def getSuccessor(self, gameState, action):
@@ -111,7 +108,7 @@ class DummyAttackAgent(CaptureAgent):
       return successor
 
   # evaluation function
-  def evaluationFunction(self, gameState, mode = "Attack"):
+  def evaluationFunction(self, gameState):
     # heuristic function to evaluate the state of the game
 
     # if terminal state    
@@ -119,32 +116,29 @@ class DummyAttackAgent(CaptureAgent):
       val = gameState.getScore()
       return val
     
-    # initialize variables for food carrying
+    # check hash
+    hash_value = hash(gameState)
+    if False and hash_value in self.heurvalue_dict:
+      return self.heurvalue_dict[hash_value]
+
     TeamFoodCarrying = 0
     EnemyFoodCarrying = 0
-    
-    # bool, for when pacman should deposit food
-    self.isFull = gameState.getAgentState(self.index).numCarrying >= 5 # todo
-
     # get food carrying of team
     for i in self.getTeam(gameState):
       TeamFoodCarrying += gameState.getAgentState(i).numCarrying
-    
     # get food carrying of enemy
     for i in self.getOpponents(gameState):
       EnemyFoodCarrying += gameState.getAgentState(i).numCarrying
     
-    # score heuristic
     val = gameState.getScore() * 1000 # score is important
 
-    # ------------food carrying heuristic---------
     food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * 250 # food carrying is important
 
     # decay factor for food carrying: want to make depositing food more important as amount of carried food increases
     food_carry_val = food_carry_val * math.exp(-TeamFoodCarrying/10)
 
     val += food_carry_val
-    #------------------------------------------------
+
 
     # check if i am pacman
     amPac = gameState.getAgentState(self.index).isPacman
@@ -152,14 +146,12 @@ class DummyAttackAgent(CaptureAgent):
     # distance between starting position and current position
     start_dist = self.getMazeDistance(self.start, gameState.getAgentPosition(self.index))
 
-    # i'm a ghost, but I am attack agent => push to other side
+
     if not amPac:
       # push to the other side
       val += start_dist
 
-      # get width of board
       width = gameState.data.layout.width
-
       # if current x coord is half of the board, then add 1000 to score
       if gameState.getAgentPosition(self.index)[0] == width//2 and start_dist != self.cross_dist:
         # distance between starting position and current position
@@ -170,9 +162,10 @@ class DummyAttackAgent(CaptureAgent):
       # check list of enemy pacmans
       enemyPacList = [gameState.getAgentState(i) for i in enemyList if gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
       
-      # incentivize eating enemy pacman
-      if len(enemyPacList) > 0:
-        val += 100 / len(enemyPacList)
+      # incentivize eating enemy pacman if we are not scared
+      amScared = gameState.getAgentState(self.index).scaredTimer > 0
+      if len(enemyPacList) > 0 and not amScared:
+        val += 1000 / len(enemyPacList)
 
       enemyList = [gameState.getAgentPosition(i) for i in enemyList]
       # remove None values
@@ -181,102 +174,98 @@ class DummyAttackAgent(CaptureAgent):
       if len(enemy_pos_list) > 0:
         enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
         for i in range(len(enemy_dist_list)):
-          val += 100/enemy_dist_list[i]
-      
+          # find if this enemy is a pacman
+          if gameState.getAgentState(self.index).isPacman:
+            val += 100/enemy_dist_list[i]
+            # don't take enemy ghost into account
+
+      # add to dict
+      self.heurvalue_dict[hash_value] = val    
       # return value
       return val
 
 
     else: # if i am pacman, i.e., i am on the other side
 
-      val += self.cross_dist + 100 # to ensure value doesn't fall when pacman is on the other side
+      if start_dist >= self.cross_dist:
+        val += self.cross_dist + 100 # to ensure value doesn't fall when pacman is on the other side
 
       # check how much food i have in my stomach
       foodCarrying = gameState.getAgentState(self.index).numCarrying
       # if enough food in my stomach, go back to my side
       
       if foodCarrying > 0:
-        pass # need to figure this out properly
+        dist_to_opp_start = self.getMazeDistance(gameState.getAgentPosition(self.index), self.opponent_start)
 
+        # have weight for food carrying: start at 0, grow to 5 as food carrying increases
+        food_weight = foodCarrying / 2 # todo: can fine tune this
 
-      # ----run away from enemy ghosts, if they are close (within 5 steps)--------------
+        val -= 1000 * food_weight /dist_to_opp_start # want to go back to my side 
+
+      # run away from enemy ghosts
       enemyList = self.getOpponents(gameState)
       enemyGhostList = [gameState.getAgentState(i) for i in enemyList if not gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
-      
-      
 
       # find distance to enemy ghosts
+      found_scared = False
+      found_ghosts = False
       enemyGhostPosList = [i.getPosition() for i in enemyGhostList]
       if len(enemyGhostPosList) > 0:
         enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
-
-        # bool list of whether enemy ghost is scared
-        # enemyScaredList = [gameState.getAgentState(i).scaredTimer > enemyGhostDistList[i] for i in enemyGhostList]
-        enemyScaredList = []
-        for i, indexEnemy in enumerate(enemyGhostDistList):
-          if gameState.getAgentState(i).scaredTimer > enemyGhostDistList[i]:
-            enemyScaredList.append(True)
+        found_ghosts = True
+        for i in range(len(enemyGhostDistList)):
+          # find if this ghost is scared
+          if enemyGhostList[i].scaredTimer > 0:
+            found_scared = True
+            val -= enemyGhostDistList[i] * 100
           else:
-            enemyScaredList.append(False)
+            val += enemyGhostDistList[i] * 100
 
-        # if no enemy ghosts are scared, then run away
-        if not any(enemyScaredList):
-            for i in range(len(enemyGhostDistList)):
-                val += enemyGhostDistList[i] * 100
-        else:
-          val -= enemyGhostDistList[i] * 100
-      
-      #--------------------------------------------------------------------------------
-      
+        val += 1000/(len(enemyGhostDistList) + 1)
+
+      # in case only un-scared ghosts are present
+      if not found_scared and found_ghosts:
+        dist_to_opp_start = self.getMazeDistance(gameState.getAgentPosition(self.index), self.opponent_start)
+        val += dist_to_opp_start * 20 # if enemy ghost is close, pacman should try to go back to its side
+
+
       # find food and eat it
       foodList = self.getFood(gameState).asList()
-
-      #check if there are any capsules to eat
-      capsuleList = self.getCapsules(gameState)
       
       if len(foodList) > 2:
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
-
-        # if there are capsules
-        if len(capsuleList) > 0:
-            capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
-            closest_capsule_dist = min(capsule_dist_list)
-        else: closest_capsule_dist = math.inf
-        
-        # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
-
         # find closest food
         closest_food_dist = min(food_dist_list)
-        closest_food_dist = min(closest_food_dist, closest_capsule_dist)
-        val += 50/closest_food_dist
+        val += 100/closest_food_dist
+
+        for i in range(len(food_dist_list)):
+          val += 50/food_dist_list[i]
+
+      # find capsules and eat them
+      capsuleList = self.getCapsules(gameState)
+      val += 10000/(len(capsuleList) + 1)
+
+      for i in range(len(capsuleList)):
+        val += 1000 / self.getMazeDistance(gameState.getAgentPosition(self.index), capsuleList[i])
+
+
 
       # check list of enemy ghosts
       enemyList = self.getOpponents(gameState)
       enemyGhostList = [gameState.getAgentState(i) for i in enemyList if not gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
 
       # find distance to enemy ghosts
-      enemyGhostPosList = [i.getPosition() for i in enemyGhostList]
-      if len(enemyGhostPosList) > 0:
-        enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
-        for i in range(len(enemyGhostDistList)):
-          val += enemyGhostDistList[i] * 100
-
-        val -= start_dist * 2 # if enemy ghost is close, pacman should try to go back to its side
+      # enemyGhostPosList = [i.getPosition() for i in enemyGhostList]
+      # if len(enemyGhostPosList) > 0:
+      #   enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
+      #   for i in range(len(enemyGhostDistList)):
+      #     val += enemyGhostDistList[i] * 100
 
 
-    # get possible actions from current state
-    actions = gameState.getLegalActions(self.index)
-    # check if possible actions are stor or reverse
-    reverse = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
-    # check if reverse is in possible actions and if stop is in possible actions and that possible actions has length 2
-    # penalizing if got to dead ends
-    if reverse in actions and len(actions) == 2 and Directions.STOP in actions:
-      carryingFood = gameState.getAgentState(self.index).numCarrying
-      # less penalty if not carrying a lot of food
-      val -= math.exp(carryingFood) 
-    
 
 
+    # add to dict
+    self.heurvalue_dict[hash_value] = val
     return val
 
   # setup for minimax
@@ -417,6 +406,7 @@ class DummyAttackAgent(CaptureAgent):
       if v >= beta:
         # add to dictionary
         self.max_agent_dict[hash_val] = (v, best_action)
+        
         return v, best_action
       alpha = max(alpha, v)
     
@@ -563,10 +553,9 @@ class DummyAttackAgent(CaptureAgent):
     depth_act_dict = {}
 
     # reset dictionaries
-    self.max_agent_dict = {}
     self.min_agent_dict = {}
+    self.max_agent_dict = {}
     self.heurvalue_dict = {}
-
 
     # iteratively deepening search
     start_time = time.time()
@@ -588,8 +577,7 @@ class DummyAttackAgent(CaptureAgent):
 
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:
-      # print("Time taken by Defense = ", time.time() - start_time)
-      # print("Defense is Random")
+      # print("Offense is Random")
       return random.choice(actions)
     else:
       # choose action with highest depth
@@ -597,11 +585,10 @@ class DummyAttackAgent(CaptureAgent):
       best_action = depth_act_dict[best_depth]
 
       # print time taken for agent to choose action
-      # print("Time taken by Defense = ", time.time() - start_time)
+      # print("Time taken by Offense = ", time.time() - start_time)
       # print("best_depth = ", best_depth)
 
       return best_action    
-
 
 
 class DummyDefenseAgent(CaptureAgent):
@@ -647,12 +634,10 @@ class DummyDefenseAgent(CaptureAgent):
     self.remainingFoodToDefend = self.getFoodYouAreDefending(gameState).asList()
     self.remainingPowerPillsToDefend = self.getCapsulesYouAreDefending(gameState)
     self.last_seen = []    
-
-    # reset dictionaries
-    self.min_agent_dict = {}
-    self.max_agent_dict = {}
+  
     self.heurvalue_dict = {}
-
+    self.max_agent_dict = {} # dictionary to store hash, value
+    self.min_agent_dict = {} # dictionary to store hash, value.
 
   def getSuccessor(self, gameState, action):
     """
@@ -675,6 +660,11 @@ class DummyDefenseAgent(CaptureAgent):
       val = gameState.getScore()
       return val
     
+    # check if gameState is in dictionary
+    hash_val = hash(gameState)
+    if False and hash_val in self.heurvalue_dict:
+      return self.heurvalue_dict[hash_val]
+
     TeamFoodCarrying = 0
     EnemyFoodCarrying = 0
     # get food carrying of team
@@ -702,6 +692,10 @@ class DummyDefenseAgent(CaptureAgent):
 
     if amPac:
       val = -1000000 # pacman should not be on defense
+
+
+      # add hash of gameState to dictionary
+      self.heurvalue_dict[hash_val] = val
       return val
 
     # distance between starting position and current position
@@ -760,7 +754,9 @@ class DummyDefenseAgent(CaptureAgent):
       # move to centered food
       defend_food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in self.remainingFoodToDefend]
       val -= sum(defend_food_dist_list) * 0.5
- 
+  
+    # add hash of gameState to dictionary
+    self.heurvalue_dict[hash_val] = val  
     # return value
     return val
 
@@ -785,6 +781,7 @@ class DummyDefenseAgent(CaptureAgent):
       successor = gameState.generateSuccessor(player_ID, action)
       successors.append((successor, action))
     return successors
+
   def max_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
     
     if depth == 0:
