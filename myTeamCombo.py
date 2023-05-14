@@ -518,6 +518,7 @@ class DummyAttackAgent(CaptureAgent):
     """
     Picks among actions randomly.
     """
+    start_time = time.time()
     actions = gameState.getLegalActions(self.index)
 
     '''
@@ -527,7 +528,7 @@ class DummyAttackAgent(CaptureAgent):
     depth_list = [2, 4, 7] # best IDS Scenario
     # depth_list = [5] # no IDS for now 
 
-    total_compute_time = 0.999 # time left for the agent to choose an action
+    total_compute_time = 0.995 # time left for the agent to choose an action
 
     depth_act_dict = {}
 
@@ -576,7 +577,7 @@ class DummyAttackAgent(CaptureAgent):
 
         # choose a random action
         # best_action = random.choice(actions)
-    #   print("time taken = ", time.time() - timeStart)
+      print("[offense] total time taken = ", time.time() - start_time)
       return best_action    
 
 
@@ -955,6 +956,7 @@ class DummyDefenseAgent(CaptureAgent):
     return v, best_action
   
   def chooseAction(self, gameState):
+    start_time = time.time()
     """
     Picks among actions randomly.
     """
@@ -967,7 +969,7 @@ class DummyDefenseAgent(CaptureAgent):
     # depth_list = [4, 6, 8]
     depth_list = [3] # no IDS for now
 
-    time_left = 0.95 # time left for the agent to choose an action
+    time_left = 0.995 # time left for the agent to choose an action
 
     depth_act_dict = {}
 
@@ -984,7 +986,8 @@ class DummyDefenseAgent(CaptureAgent):
         depth_act_dict[depth] = best_action
       else:
         break
-
+    
+    # print("[combo] total time taken = ", time.time() - start_time)
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:
       return random.choice(actions)
@@ -992,6 +995,25 @@ class DummyDefenseAgent(CaptureAgent):
       # choose action with highest depth
       best_depth = max(depth_act_dict.keys())
       best_action = depth_act_dict[best_depth]
+
+
+
+
+      # if best action is stop, NEVER ALLOW THIS TO HAPPEN 
+      if best_action == Directions.STOP :
+        # print("stop was chosen as best action")
+        
+        # go through all depths and find the first non stop action
+        for depth in depth_act_dict.keys():
+            if depth_act_dict[depth] != Directions.STOP:
+                best_action = depth_act_dict[depth]
+                break
+        if best_action == Directions.STOP:
+            # remove stop from actions
+            # actions.remove(Directions.STOP)
+            best_action = random.choice(actions)
+
+      print("[defense] total time taken = ", time.time() - start_time)
       return best_action    
     
 

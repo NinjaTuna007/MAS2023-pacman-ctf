@@ -540,6 +540,7 @@ class DummyAttackAgent(CaptureAgent):
     """
     Picks among actions randomly.
     """
+    start_time = time.time()
     actions = gameState.getLegalActions(self.index)
 
     '''
@@ -576,6 +577,7 @@ class DummyAttackAgent(CaptureAgent):
       else:
         break
 
+    
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:
       # print("Offense is Random")
@@ -588,7 +590,7 @@ class DummyAttackAgent(CaptureAgent):
       # print time taken for agent to choose action
       # print("Time taken by Offense = ", time.time() - start_time)
       # print("best_depth = ", best_depth)
-
+    
       return best_action    
 
 
