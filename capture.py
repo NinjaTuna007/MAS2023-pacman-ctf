@@ -764,8 +764,10 @@ def readCommand( argv ):
   """
   parser = OptionParser(usageStr)
 
+  # parser.add_option('-r', '--red', help=default('Red team'),
+  #                   default='baselineTeam')
   parser.add_option('-r', '--red', help=default('Red team'),
-                    default='baselineTeam')
+                    default='myTeamCombo')
   parser.add_option('-b', '--blue', help=default('Blue team'),
                     default='baselineTeam')
   parser.add_option('--red-name', help=default('Red team name'),

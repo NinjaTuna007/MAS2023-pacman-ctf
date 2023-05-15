@@ -136,13 +136,14 @@ class DummyAttackAgent(CaptureAgent):
     
     # score heuristic
     val = gameState.getScore() * 1000 # score is important
+    scoreHeur = gameState.getScore() * 1000 # track of score heuristic, for debugging
 
     # ------------food carrying heuristic---------
     food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * 250 # food carrying is important
 
     # decay factor for food carrying: want to make depositing food more important as amount of carried food increases
-    food_carry_val = food_carry_val * math.exp(-TeamFoodCarrying/10)
-
+    food_carry_val = food_carry_val * math.exp(-TeamFoodCarrying/10) # for debugging, but included before
+ 
     val += food_carry_val
     #------------------------------------------------
 
@@ -156,6 +157,7 @@ class DummyAttackAgent(CaptureAgent):
     if not amPac:
       # push to the other side
       val += start_dist
+      start_dist_heur = start_dist # for debugging
 
       # get width of board
       width = gameState.data.layout.width
@@ -173,6 +175,7 @@ class DummyAttackAgent(CaptureAgent):
       # incentivize eating enemy pacman
       if len(enemyPacList) > 0:
         val += 100 / len(enemyPacList)
+        eating_heur = 100 / len(enemyPacList) # for debugging
 
       enemyList = [gameState.getAgentPosition(i) for i in enemyList]
       # remove None values
@@ -182,6 +185,7 @@ class DummyAttackAgent(CaptureAgent):
         enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
         for i in range(len(enemy_dist_list)):
           val += 100/enemy_dist_list[i]
+          enemy_dist_heur = 100/enemy_dist_list[i] # for debugging
       
       # return value
       return val
@@ -190,6 +194,7 @@ class DummyAttackAgent(CaptureAgent):
     else: # if i am pacman, i.e., i am on the other side
 
       val += self.cross_dist + 100 # to ensure value doesn't fall when pacman is on the other side
+      cross_dist_heur = self.cross_dist + 100 # for debugging
 
       # check how much food i have in my stomach
       foodCarrying = gameState.getAgentState(self.index).numCarrying
@@ -223,8 +228,10 @@ class DummyAttackAgent(CaptureAgent):
         if not any(enemyScaredList):
             for i in range(len(enemyGhostDistList)):
                 val += enemyGhostDistList[i] * 100
+                ghost_heur = enemyGhostDistList[i] * 100 # for debugging
         else:
           val -=  1000 / min(enemyGhostDistList)
+          scared_heur = 1000 / min(enemyGhostDistList) # for debugging
       
       #--------------------------------------------------------------------------------
       
@@ -239,14 +246,18 @@ class DummyAttackAgent(CaptureAgent):
 
         for i in range(len(food_dist_list)):
           val += 50/food_dist_list[i]
+          food_heur = 50/food_dist_list[i] # for debugging
       
 
       # if there are capsules
       val += 1000 / (len(capsuleList) + 1)
+      capsule_heur_1 = 1000 / (len(capsuleList) + 1) # for debugging
+      
       if len(capsuleList) > 0:
           capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
           closest_capsule_dist = min(capsule_dist_list)
           val += 100/closest_capsule_dist
+          capsule_heur = 100/closest_capsule_dist # for debugging
         
         # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
 
@@ -265,8 +276,10 @@ class DummyAttackAgent(CaptureAgent):
         enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
         for i in range(len(enemyGhostDistList)):
           val += enemyGhostDistList[i] * 100
+          ghost_heur_2 = enemyGhostDistList[i] * 100 # for debugging
 
         val -= start_dist * 2 # if enemy ghost is close, pacman should try to go back to its side
+        start_dist_heur_2 = start_dist * 2 # for debugging
 
 
     # get possible actions from current state
@@ -279,6 +292,7 @@ class DummyAttackAgent(CaptureAgent):
       carryingFood = gameState.getAgentState(self.index).numCarrying
       # less penalty if not carrying a lot of food
       val -= math.exp(carryingFood) 
+      dead_end_heur = math.exp(carryingFood) # for debugging
     
 
 
