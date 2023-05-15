@@ -91,12 +91,6 @@ class DummyAttackAgent(CaptureAgent):
     self.opponent_start = (gameState.data.layout.width - 1 - self.start[0], gameState.data.layout.height - 1 - self.start[1])
     self.isFull = False
 
-    # reset dictionaries
-    self.min_agent_dict = {}
-    self.max_agent_dict = {}
-    self.heurvalue_dict = {}
-
-
 
   def getSuccessor(self, gameState, action):
     """
@@ -224,7 +218,7 @@ class DummyAttackAgent(CaptureAgent):
             for i in range(len(enemyGhostDistList)):
                 val += enemyGhostDistList[i] * 100
         else:
-          val -=  1000 / min(enemyGhostDistList)
+          val -= enemyGhostDistList[i] * 100
       
       #--------------------------------------------------------------------------------
       
@@ -237,23 +231,18 @@ class DummyAttackAgent(CaptureAgent):
       if len(foodList) > 2:
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
 
-        for i in range(len(food_dist_list)):
-          val += 50/food_dist_list[i]
-      
-
-      # if there are capsules
-      val += 1000 / (len(capsuleList) + 1)
-      if len(capsuleList) > 0:
-          capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
-          closest_capsule_dist = min(capsule_dist_list)
-          val += 100/closest_capsule_dist
+        # if there are capsules
+        if len(capsuleList) > 0:
+            capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
+            closest_capsule_dist = min(capsule_dist_list)
+        else: closest_capsule_dist = math.inf
         
         # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
 
         # find closest food
-        # closest_food_dist = min(food_dist_list)
-        # closest_food_dist = min(closest_food_dist, closest_capsule_dist)
-        # val += 50/closest_food_dist
+        closest_food_dist = min(food_dist_list)
+        closest_food_dist = min(closest_food_dist, closest_capsule_dist)
+        val += 50/closest_food_dist
 
       # check list of enemy ghosts
       enemyList = self.getOpponents(gameState)
@@ -305,20 +294,12 @@ class DummyAttackAgent(CaptureAgent):
       successor = gameState.generateSuccessor(player_ID, action)
       successors.append((successor, action))
     return successors
-
+  
   def max_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
     
     if depth == 0:
       return self.evaluationFunction(gameState), None
     
-    # hash (gameState, agent_ID, depth) and store (value, action) associated with this in a dictionary
-    hash_val = hash((gameState, agent_ID, depth))
-    # check if this hash already exists in the dictionary
-    if hash_val in self.max_agent_dict:
-      return self.max_agent_dict[hash_val]
-
-
-
     if total_compute_time < 0.001:
       # scream not enough time
       return -math.inf, None
@@ -349,7 +330,7 @@ class DummyAttackAgent(CaptureAgent):
       # check if time is up
       current_time = time.time()
       if current_time - start_time > total_compute_time:
-        return -math.inf, None
+        return v, best_action
         # time_left = time_left - (current_time - start_time)
 
       # check if enemy is visible from the successor state
@@ -420,25 +401,14 @@ class DummyAttackAgent(CaptureAgent):
           best_action = action
 
       if v >= beta:
-        # add to dictionary
-        self.max_agent_dict[hash_val] = (v, best_action)
         return v, best_action
       alpha = max(alpha, v)
-    
-    # add to dictionary if the value is not -inf
-    if v != -math.inf:
-      self.max_agent_dict[hash_val] = (v, best_action)
     return v, best_action
   
   def min_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
     if depth == 0:
       return self.evaluationFunction(gameState), None
-
-    hash_val = hash((gameState, agent_ID, depth))
-    # check if this hash already exists in the dictionary
-    if hash_val in self.min_agent_dict:
-      return self.min_agent_dict[hash_val]
-
+    
     if total_compute_time < 0.0001:
       # scream not enough time
       return math.inf, None
@@ -468,7 +438,7 @@ class DummyAttackAgent(CaptureAgent):
         
         current_time = time.time()
         if current_time - start_time > total_compute_time:
-          return math.inf, None
+          return v, best_action
           # total_compute_time = total_compute_time - (current_time - start_time)
         
         # check if enemy is visible from the successor state
@@ -540,38 +510,27 @@ class DummyAttackAgent(CaptureAgent):
             best_action = action
   
         if v <= alpha:
-          # add to dictionary
-          self.min_agent_dict[hash_val] = (v, best_action)
           return v, best_action
         beta = min(beta, v)
-    
-    # add to dictionary if the value is not inf
-    if v != math.inf:
-      self.min_agent_dict[hash_val] = (v, best_action)
     return v, best_action
 
   def chooseAction(self, gameState):
     """
     Picks among actions randomly.
     """
+    start_time = time.time()
     actions = gameState.getLegalActions(self.index)
 
     '''
     You should change this in your own agent.
     '''
 
-    depth_list = [5, 8, 10] # best IDS Scenario
-    # depth_list = [10] # no IDS for now 
+    depth_list = [2, 4, 7] # best IDS Scenario
+    # depth_list = [5] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
 
     depth_act_dict = {}
-
-    # reset dictionaries
-    self.max_agent_dict = {}
-    self.min_agent_dict = {}
-    self.heurvalue_dict = {}
-
 
     # iteratively deepening search
     start_time = time.time()
@@ -591,21 +550,37 @@ class DummyAttackAgent(CaptureAgent):
       else:
         break
 
+
+
+
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:
-      # print("Time taken by Defense = ", time.time() - start_time)
-      # print("Defense is Random")
       return random.choice(actions)
     else:
       # choose action with highest depth
       best_depth = max(depth_act_dict.keys())
       best_action = depth_act_dict[best_depth]
+      
+      # if best action is stop, NEVER ALLOW THIS TO HAPPEN 
+      if best_action == Directions.STOP :
+        # print("stop was chosen as best action")
+        
+        # go through all depths and find the first non stop action
+        for depth in depth_act_dict.keys():
+            if depth_act_dict[depth] != Directions.STOP:
+                best_action = depth_act_dict[depth]
+                break
+        if best_action == Directions.STOP:
+            # remove stop from actions
+            # actions.remove(Directions.STOP)
+            best_action = random.choice(actions)
 
-      # print time taken for agent to choose action
-      # print("Time taken by Defense = ", time.time() - start_time)
-      # print("best_depth = ", best_depth)
-
+        # choose a random action
+        # best_action = random.choice(actions)
+      # print("[offense] total time taken = ", time.time() - start_time)
       return best_action    
+
+
 
 
 
@@ -652,12 +627,11 @@ class DummyDefenseAgent(CaptureAgent):
     self.remainingFoodToDefend = self.getFoodYouAreDefending(gameState).asList()
     self.remainingPowerPillsToDefend = self.getCapsulesYouAreDefending(gameState)
     self.last_seen = []    
-
-    # reset dictionaries
-    self.min_agent_dict = {}
-    self.max_agent_dict = {}
-    self.heurvalue_dict = {}
-
+    
+    # track previous "values" of states the agent has been in: currently not used
+    self.previousStates = []
+    self.previousActions = []
+    self.previousRewards = []
 
   def getSuccessor(self, gameState, action):
     """
@@ -706,7 +680,7 @@ class DummyDefenseAgent(CaptureAgent):
 
 
     if amPac:
-      val = -1000000 # pacman should not be on defense
+      val = -math.inf # pacman should not be on defense
       return val
 
     # distance between starting position and current position
@@ -790,20 +764,13 @@ class DummyDefenseAgent(CaptureAgent):
       successor = gameState.generateSuccessor(player_ID, action)
       successors.append((successor, action))
     return successors
-  def max_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
+  
+  def max_agent(self, gameState, agent_ID, depth, time_left = math.inf, alpha = -math.inf, beta = math.inf):
     
     if depth == 0:
       return self.evaluationFunction(gameState), None
     
-    # hash (gameState, agent_ID, depth) and store (value, action) associated with this in a dictionary
-    hash_val = hash((gameState, agent_ID, depth))
-    # check if this hash already exists in the dictionary
-    if hash_val in self.max_agent_dict:
-      return self.max_agent_dict[hash_val]
-
-
-
-    if total_compute_time < 0.001:
+    if time_left < 0.05:
       # scream not enough time
       return -math.inf, None
     
@@ -832,9 +799,10 @@ class DummyDefenseAgent(CaptureAgent):
       
       # check if time is up
       current_time = time.time()
-      if current_time - start_time > total_compute_time:
-        return -math.inf, None
-        # time_left = time_left - (current_time - start_time)
+      if current_time - start_time > time_left:
+        return v, best_action
+      else:
+        time_left = time_left - (current_time - start_time)
 
       # check if enemy is visible from the successor state
       enemy_indices = opponent_team
@@ -874,14 +842,7 @@ class DummyDefenseAgent(CaptureAgent):
       if enemy_conf != None:
         # print("ENEMY IS MOVING")
         # log distance to enemy
-        current_time = time.time()
-        time_left = total_compute_time - (current_time - start_time)
         act_value,_ = self.min_agent(successor, enemy_ID, depth-1, time_left, alpha, beta)
-
-        # check if min agent ran out of time
-        if act_value == math.inf:
-          # return v, best_action
-          return -math.inf, None
 
         if act_value > v:
           v = act_value
@@ -889,41 +850,22 @@ class DummyDefenseAgent(CaptureAgent):
         
       else:
         # if enemy is not visible, then assume board remains the same and make next move
-        current_time = time.time()
-        time_left = total_compute_time - (current_time - start_time)
         act_value,_ = self.max_agent(successor, agent_ID, depth-1, time_left, alpha, beta)
-
-        # check if max agent ran out of time
-        if act_value == -math.inf:
-          # return v, best_action
-          return -math.inf, None
-
 
         if act_value > v:
           v = act_value
           best_action = action
 
       if v >= beta:
-        # add to dictionary
-        self.max_agent_dict[hash_val] = (v, best_action)
         return v, best_action
       alpha = max(alpha, v)
-    
-    # add to dictionary if the value is not -inf
-    if v != -math.inf:
-      self.max_agent_dict[hash_val] = (v, best_action)
     return v, best_action
   
-  def min_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
+  def min_agent(self, gameState, agent_ID, depth, time_left = math.inf, alpha = -math.inf, beta = math.inf):
     if depth == 0:
       return self.evaluationFunction(gameState), None
-
-    hash_val = hash((gameState, agent_ID, depth))
-    # check if this hash already exists in the dictionary
-    if hash_val in self.min_agent_dict:
-      return self.min_agent_dict[hash_val]
-
-    if total_compute_time < 0.0001:
+    
+    if time_left < 0.05:
       # scream not enough time
       return math.inf, None
     
@@ -951,9 +893,10 @@ class DummyDefenseAgent(CaptureAgent):
     for successor, action in successor_list:
         
         current_time = time.time()
-        if current_time - start_time > total_compute_time:
-          return math.inf, None
-          # total_compute_time = total_compute_time - (current_time - start_time)
+        if current_time - start_time > time_left - 0.05:
+          return v, best_action
+        else:
+          time_left = time_left - (current_time - start_time)
         
         # check if enemy is visible from the successor state
         enemy_indices = opponent_team
@@ -993,15 +936,7 @@ class DummyDefenseAgent(CaptureAgent):
 
           
         if enemy_conf != None:
-          current_time = time.time()
-          time_left = total_compute_time - (current_time - start_time)
           act_value,_ = self.max_agent(successor, enemy_ID, depth-1, time_left, alpha, beta)
-
-          # check if max agent ran out of time
-          if act_value == -math.inf:
-            # return v, best_action
-            return math.inf, None
-
 
           if act_value < v:
             v = act_value
@@ -1009,32 +944,19 @@ class DummyDefenseAgent(CaptureAgent):
         
         else:
           # if enemy is not visible, then assume board remains the same and make next move
-          current_time = time.time()
-          time_left = total_compute_time - (current_time - start_time)
           act_value,_ = self.min_agent(successor, agent_ID, depth-1, time_left, alpha, beta)
-
-          # check if min agent ran out of time
-          if act_value == math.inf:
-            # return v, best_action
-            return math.inf, None
-
 
           if act_value < v:
             v = act_value
             best_action = action
   
         if v <= alpha:
-          # add to dictionary
-          self.min_agent_dict[hash_val] = (v, best_action)
           return v, best_action
         beta = min(beta, v)
-    
-    # add to dictionary if the value is not inf
-    if v != math.inf:
-      self.min_agent_dict[hash_val] = (v, best_action)
     return v, best_action
-
+  
   def chooseAction(self, gameState):
+    start_time = time.time()
     """
     Picks among actions randomly.
     """
@@ -1044,29 +966,19 @@ class DummyDefenseAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    depth_list = [5, 8, 10] # best IDS Scenario
-    # depth_list = [10] # no IDS for now 
+    # depth_list = [4, 6, 8]
+    depth_list = [3] # no IDS for now
 
-    total_compute_time = 0.995 # time left for the agent to choose an action
+    time_left = 0.995 # time left for the agent to choose an action
 
     depth_act_dict = {}
-
-    # reset dictionaries
-    self.max_agent_dict = {}
-    self.min_agent_dict = {}
-    self.heurvalue_dict = {}
-
 
     # iteratively deepening search
     start_time = time.time()
 
     for depth in depth_list:
-      # time bookkeeping      
       current_time = time.time()
-      time_spent = current_time - start_time
-      time_left = total_compute_time - time_spent
-
-      if time_left < 0.001:
+      if current_time - start_time > time_left:
         break
       
       v, best_action = self.max_agent(gameState, self.index, depth, time_left)
@@ -1074,20 +986,16 @@ class DummyDefenseAgent(CaptureAgent):
         depth_act_dict[depth] = best_action
       else:
         break
-
+    
+    # print("[combo] total time taken = ", time.time() - start_time)
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:
-      # print("Time taken by Defense = ", time.time() - start_time)
-      # print("Defense is Random")
       return random.choice(actions)
     else:
       # choose action with highest depth
       best_depth = max(depth_act_dict.keys())
       best_action = depth_act_dict[best_depth]
 
-      # print time taken for agent to choose action
-      # print("Time taken by Defense = ", time.time() - start_time)
-      # print("best_depth = ", best_depth)
 
 
 
@@ -1105,5 +1013,10 @@ class DummyDefenseAgent(CaptureAgent):
             # actions.remove(Directions.STOP)
             best_action = random.choice(actions)
 
-    #   print("[defense] total time taken = ", time.time() - start_time)
+      # print("[defense] total time taken = ", time.time() - start_time)
       return best_action    
+    
+
+
+
+
