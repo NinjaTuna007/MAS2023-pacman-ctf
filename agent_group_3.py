@@ -577,7 +577,7 @@ class DummyAttackAgent(CaptureAgent):
 
         # choose a random action
         # best_action = random.choice(actions)
-      print("[offense] total time taken = ", time.time() - start_time)
+      # print("[offense] total time taken = ", time.time() - start_time)
       return best_action    
 
 
@@ -1013,7 +1013,7 @@ class DummyDefenseAgent(CaptureAgent):
             # actions.remove(Directions.STOP)
             best_action = random.choice(actions)
 
-    #   print("[defense] total time taken = ", time.time() - start_time)
+      # print("[defense] total time taken = ", time.time() - start_time)
       return best_action    
     
 
