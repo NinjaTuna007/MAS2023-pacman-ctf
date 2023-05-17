@@ -286,13 +286,15 @@ class DummyAttackAgent(CaptureAgent):
           val += 1000 / scaredEnemyGhostDistList[i]
 
         # is the closest unscared ghost to my left or right?
-        closest_unscared_ghost_index = unscaredEnemyGhostDistList.index(min(unscaredEnemyGhostDistList))
-        closest_unscared_ghost_pos = unscaredEnemyGhostPosList[closest_unscared_ghost_index]
+        if len(unscaredEnemyGhostDistList) > 0:
+          closest_unscared_ghost_index = unscaredEnemyGhostDistList.index(min(unscaredEnemyGhostDistList))
+          closest_unscared_ghost_pos = unscaredEnemyGhostPosList[closest_unscared_ghost_index]
 
-        # check if ghost is closer to grid center than I am
-        ghost_to_center_list = [self.getMazeDistance(closest_unscared_ghost_pos, i) for i in self.center_line]
-        if min(ghost_to_center_list) > center_dist:
-          val -= center_dist * 1.5
+          # check if ghost is closer to grid center than I am
+          ghost_to_center_list = [self.getMazeDistance(closest_unscared_ghost_pos, i) for i in self.center_line]
+        
+          if min(ghost_to_center_list) > center_dist:
+            val -= center_dist * 1.5
 
       if len(foodList) > 2:
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
@@ -1210,7 +1212,7 @@ class DummyDefenseAgent(CaptureAgent):
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:
       # print("Time taken by Defense = ", time.time() - start_time)
-      # print("Defense is Random")
+      print("Defense is Random")
       return random.choice(actions)
     else:
       # choose action with highest depth
