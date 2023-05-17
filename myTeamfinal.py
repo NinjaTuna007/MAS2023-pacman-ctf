@@ -810,7 +810,19 @@ class DummyDefenseAgent(CaptureAgent):
     if len(self.last_seen) > 0 and not amScared:
       last_seen_dist = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in self.last_seen]
 
-      val +=  5000/(min(last_seen_dist) + 1 ) # the closer you are to the last seen position, the better
+      value_of_position = []
+
+      for i in range(len(last_seen_dist)):
+        dist_to_food_list = [self.getMazeDistance(self.last_seen[i], food_item) for food_item in self.remainingFoodToDefend] 
+        # filter out entries with distance > 10
+        dist_to_food_list = [dist for dist in dist_to_food_list if dist < 10]
+
+        value_of_position.append(len(dist_to_food_list))
+
+      # find more valuable position idx
+      idx = value_of_position.index(max(value_of_position))
+
+      val += 5000/(last_seen_dist[idx] + 1) # the closer you are to the last seen position, the better
 
 
     if len(enemy_pos_list) == 0 and len(self.last_seen) == 0 and not amScared:
@@ -850,6 +862,7 @@ class DummyDefenseAgent(CaptureAgent):
       successor = gameState.generateSuccessor(player_ID, action)
       successors.append((successor, action))
     return successors
+  
   def max_agent(self, gameState, agent_ID, depth, total_compute_time = math.inf, alpha = -math.inf, beta = math.inf):
     
     if depth == 0:
@@ -1113,7 +1126,13 @@ class DummyDefenseAgent(CaptureAgent):
     foodList = self.getFoodYouAreDefending(gameState).asList()
     if foodList != self.remainingFoodToDefend:
       # compare self.remainingFoodToDefend and foodList to find out which food was eaten
-      self.last_seen = [i for i in self.remainingFoodToDefend if i not in foodList]
+      self.last_seen += [i for i in self.remainingFoodToDefend if i not in foodList]
+    
+    # filter out positions in last_seen that you are close enough (<=5) to
+    self.last_seen = [i for i in self.last_seen if self.getMazeDistance(gameState.getAgentPosition(self.index), i) > 3]
+
+    # print("last_seen = ", self.last_seen)
+    
     # update remaining food to defend
     self.remainingFoodToDefend = foodList
 
