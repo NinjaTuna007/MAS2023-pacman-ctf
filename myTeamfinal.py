@@ -298,6 +298,12 @@ class DummyAttackAgent(CaptureAgent):
 
       if len(foodList) > 2:
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
+
+        # sort food list by distance
+        food_dist_list.sort()
+
+        # retain only 5 closest food
+        food_dist_list = food_dist_list[:3]
         
         food_val = 0
         food_decay_factor = math.exp(-foodCarrying/6)
@@ -714,6 +720,8 @@ class DummyDefenseAgent(CaptureAgent):
     self.prev_enemy_pac_list = []
     self.prev_min_pac_dist = math.inf
 
+    self.kill_timer = 0
+
 
   def getSuccessor(self, gameState, action):
     """
@@ -759,6 +767,13 @@ class DummyDefenseAgent(CaptureAgent):
 
     # check if I am scared
     amScared = gameState.getAgentState(self.index).scaredTimer > 0
+
+
+    # use kill timer
+    if self.kill_timer > 0:
+      self.kill_timer -= 1
+      # value of a kill starts at 100000 and decreases as time passes
+      # val += 100000 - self.kill_timer * 10000
 
 
     if amPac:
@@ -829,6 +844,7 @@ class DummyDefenseAgent(CaptureAgent):
       if self.prev_min_pac_dist == 1:
         # this means you just ate an enemy pacman
         val += 10000
+        self.kill_timer = 10
       elif self.prev_min_pac_dist == 5:
         val -= 10000
       # reset last_seen
