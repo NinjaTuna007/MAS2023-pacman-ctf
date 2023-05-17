@@ -28,7 +28,7 @@ from util import nearestPoint
 #################
 
 def createTeam(firstIndex, secondIndex, isRed,
-               first = 'DummyAttackAgent', second = 'DummyDefenseAgent'):
+               first = 'DummyAttackAgent', second = 'DummyAttackAgent'):
   """
   This function should return a list of two agents that will form the
   team, initialized using firstIndex and secondIndex as their agent
@@ -143,9 +143,10 @@ class DummyAttackAgent(CaptureAgent):
     val = gameState.getScore() * 1000 # score is important
 
     # ------------food carrying heuristic---------
-    food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * 500 # food carrying is important
+    food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * 250 # food carrying is important
 
     # decay factor for food carrying: want to make depositing food more important as amount of carried food increases
+    food_carry_val = food_carry_val * math.exp(-TeamFoodCarrying/10)
 
     val += food_carry_val
     #------------------------------------------------
@@ -197,7 +198,7 @@ class DummyAttackAgent(CaptureAgent):
       # if enough food in my stomach, go back to my side
       
       # define imperative in terms of food carrying
-      imperative_to_return = max(0, (foodCarrying - 3) / 5 )
+      imperative_to_return = max(0, (foodCarrying - 3) / 5 ) * 2
 
       val -= center_dist * imperative_to_return
 
@@ -236,14 +237,9 @@ class DummyAttackAgent(CaptureAgent):
       
       if len(foodList) > 2:
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
-        
-        food_val = 0
-        food_decay_factor = math.exp(-foodCarrying/4)
+
         for i in range(len(food_dist_list)):
-          food_val += (50/food_dist_list[i]) * food_decay_factor
-
-
-        val += food_val/len(foodList)
+          val += 50/food_dist_list[i]
       
 
       # if there are capsules
@@ -253,7 +249,7 @@ class DummyAttackAgent(CaptureAgent):
           capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
 
           for i in range(len(capsule_dist_list)):
-            val += 100/capsule_dist_list[i]
+            val += 500/capsule_dist_list[i]
         
         # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
 
