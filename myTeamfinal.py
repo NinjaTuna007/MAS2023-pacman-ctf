@@ -102,6 +102,9 @@ class DummyAttackAgent(CaptureAgent):
         if not gameState.hasWall(gameState.data.layout.width//2 - 1, i) and not gameState.hasWall(gameState.data.layout.width//2, i) and not gameState.hasWall(gameState.data.layout.width//2 + 1, i):
             self.center_line.append((gameState.data.layout.width/2, i))
 
+    # find total time steps
+    self.total_time = gameState.data.timeleft
+
 
   def getSuccessor(self, gameState, action):
     """
@@ -143,7 +146,16 @@ class DummyAttackAgent(CaptureAgent):
     val = gameState.getScore() * 1000 # score is important
 
     # ------------food carrying heuristic---------
-    food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * 500 # food carrying is important
+
+    # define explore vs exploit factor
+    time_left = gameState.data.timeleft
+    # total time left is self.total_time
+
+    # start at 1000, reduce to 250 around half time
+    explore_v_exploit = 500
+
+
+    food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * explore_v_exploit # food carrying is important
 
     # decay factor for food carrying: want to make depositing food more important as amount of carried food increases
 
@@ -238,12 +250,12 @@ class DummyAttackAgent(CaptureAgent):
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
         
         food_val = 0
-        food_decay_factor = math.exp(-foodCarrying/4)
+        food_decay_factor = math.exp(-foodCarrying/6)
         for i in range(len(food_dist_list)):
           food_val += (50/food_dist_list[i]) * food_decay_factor
 
 
-        val += food_val/len(foodList)
+        val += food_val
       
 
       # if there are capsules
