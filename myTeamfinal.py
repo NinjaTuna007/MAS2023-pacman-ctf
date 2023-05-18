@@ -21,6 +21,7 @@ import time
 import distanceCalculator
 import random, time, util, sys
 from util import nearestPoint
+from typing import List, Tuple # for type hinting
 
 
 #################
@@ -104,6 +105,13 @@ class DummyAttackAgent(CaptureAgent):
 
     # find total time steps
     self.total_time = gameState.data.timeleft
+
+    # find dead ends
+    self.FindDeadEnds(gameState)
+
+
+
+
 
 
   def getSuccessor(self, gameState, action):
@@ -659,6 +667,112 @@ class DummyAttackAgent(CaptureAgent):
       # print("best_depth = ", best_depth)
 
       return best_action    
+
+  def FindDeadEnds(self, gameState)->list:
+    """Finds dead ends in the maze. Returns a list of dead ends."""
+    
+    walls = gameState.getWalls()
+    dead_ends = []
+    leadingToDeadEnd = []
+    
+    # check if agent is red or blue so know x ranges
+    if self.red:
+      startPos = (walls.width)//2
+      endPos = walls.width - 1
+    else:
+      startPos = 1
+      endPos = (walls.width)//2
+      
+
+    # iterate through all cells in the maze of opponent side
+    for x in range(startPos, endPos):
+      y_temp = 1
+      
+      for y in range(1, walls.height - 1):
+        if not walls[x][y]:
+          # if the number of adjacent cells that are walls is greater than 2, then it is a dead end
+          if len([i for i in self.GetAdjacentCells((x, y), walls)   ]) == 1: # if not walls[i[0]][i[1]]
+            dead_ends.append((x, y))
+
+            # find all cells that lead to this dead end
+            leadingToDeadEnd.append(self.GetAdjacentCells((x, y), walls))
+
+            self.FindPointsFromDeadEnd((x, y), walls)
+
+
+
+            # draw red dots on dead ends
+            # self.debugDraw(dead_ends[-1], [1,0,0], clear=False)
+
+            # draw yellow dots on cells leading to dead ends
+            # for cell in leadingToDeadEnd[-1]:
+            #   self.debugDraw(cell, [1,1,0], clear=False)
+
+    return dead_ends
+
+  def GetAdjacentCells(self, cell:Tuple, walls):
+    """Returns a list of adjacent cells that are not walls."""
+    x, y = cell
+    adjacentCells = []
+
+    # if both x and y are not on the edge of the board
+    # if x <walls.width - 1 and y < walls.height - 1 and x > 0 and y > 0:
+    if not walls[x+1][y]:
+      adjacentCells.append((x+1, y))
+    if not walls[x-1][y]:
+      adjacentCells.append((x-1, y))
+    if not walls[x][y+1]:
+      adjacentCells.append((x, y+1))
+    if not walls[x][y-1]:
+      adjacentCells.append((x, y-1))
+    return adjacentCells
+  
+  def FindPointsFromDeadEnd(self, cell:Tuple, walls):
+    """starts at a dead end, saves points in list until number of adjasent cells is greater than 2"""
+    x, y = cell
+
+    # draw red dots on dead ends
+    self.debugDraw((x,y), [1,0,0], clear=False)
+
+
+    points = []
+    # points.append((x, y))
+    currentTime = time.time()
+    numbOfComputations = 0
+
+    # dictionary of already visited cells
+    visitedCells = {}
+
+    # add current cell to visited cells
+    visitedCells[(x, y)] = True
+
+    while len(self.GetAdjacentCells((x, y), walls)) < 3 :
+      listOfAdjacentCells = self.GetAdjacentCells((x, y), walls)
+      
+      
+
+      # x, y = self.GetAdjacentCells((x, y), walls)[0]
+
+      # find the unvisited adjacent cell
+      for i in listOfAdjacentCells:
+        if i not in visitedCells:
+          x, y = i
+          visitedCells[(x, y)] = True
+          break
+
+      points.append((x, y))
+
+      # draw orange dots on points
+      self.debugDraw(points[-1], [1,0.5,0], clear=False)
+      numbOfComputations += 1
+
+      # if numbOfComputations > 30000:
+      #   break
+
+    return points
+
+
+    
 
 
 
@@ -1257,3 +1371,34 @@ class DummyDefenseAgent(CaptureAgent):
 
     #   print("[defense] total time taken = ", time.time() - start_time)
       return best_action    
+    
+
+
+
+
+
+
+
+
+
+
+
+class LinkedList:
+  """Class that finds dead ends in the maze and stores them in a linked list"""
+
+  def __init__(self, currentPos:Tuple[int, int], parentPos:Tuple[int, int], legalActions:List[Directions]):
+    self.currentPos = currentPos
+    self.parentPos = parentPos
+    self.legalActions = legalActions
+    self.next = None
+
+    self.numbOfLegalActions = len(legalActions)
+
+    # check if dead end: stop and reverse always possible options => if only options then dead end
+    self.isDeadEnd = True if self.numbOfLegalActions == 2 else False
+
+    # if dead end, use debug draw to draw red point 
+    if self.isDeadEnd:
+      CaptureAgent.debugDraw(self.currentPos, [1, 0, 0], clear=False)
+
+
