@@ -113,7 +113,7 @@ class DummyAttackAgent(CaptureAgent):
 
     # get number of keys in dead end dictionary
     self.dead_end_keys = len(self.deadEndQuantizationDict.keys())
-    print("Number of dead ends: ", self.dead_end_keys)
+    # print("Number of dead ends: ", self.dead_end_keys)
 
 
 
@@ -683,6 +683,9 @@ class DummyAttackAgent(CaptureAgent):
 
     # dictionary of DeadEndQuantization objects
     self.deadEndQuantizationDict = {}
+
+    # dictionary of points in dead end paths
+    self.pointsInDeadEndPaths = {}
     
     # check if agent is red or blue so know x ranges
     if self.red:
@@ -709,15 +712,28 @@ class DummyAttackAgent(CaptureAgent):
             # add last point in listLeading2DeadEnds to dictionary of DeadEndQuantization objects
             self.deadEndQuantizationDict[listLeading2DeadEnds[-1]] = DeadEndQuantization(listLeading2DeadEnds[-1], len(listLeading2DeadEnds))
 
-            # color point yellow
-            self.debugDraw(listLeading2DeadEnds[-1], [1,1,0], clear=False)
+            # color point yellow, drawing point that is first point in dead end path
+            # self.debugDraw(listLeading2DeadEnds[-1], [1,1,0], clear=False)
 
             # draw red dots on dead ends
             # self.debugDraw(dead_ends[-1], [1,0,0], clear=False)
 
-            # draw yellow dots on cells leading to dead ends
-            # for cell in leadingToDeadEnd[-1]:
-            #   self.debugDraw(cell, [1,1,0], clear=False)
+            # loop through all points in listLeading2DeadEnds backwards and add to dictionary   [new]
+            for i in range(len(listLeading2DeadEnds)-1, -1, -1):
+              # temporary deadendquantization object
+              tempDEQ = DeadEndQuantization(listLeading2DeadEnds[i], len(listLeading2DeadEnds))
+              
+              # since going backwards, the index of the point in the list is len(listLeading2DeadEnds)-1-i, indexes left to dead end is i, so point i is last point before dead end
+              tempDEQ.Leading2DeadEndInformation(  len(listLeading2DeadEnds)-1-i, i) 
+
+
+              # print("index i = ", str(len(listLeading2DeadEnds)-1-i)+ " until dead end is "+ str(i)  )
+              self.pointsInDeadEndPaths[listLeading2DeadEnds[i]] = tempDEQ
+
+              # color point green
+              # self.debugDraw(listLeading2DeadEnds[i], [0,1,0], clear=False)
+
+
 
     return dead_ends
 
@@ -743,13 +759,11 @@ class DummyAttackAgent(CaptureAgent):
     x, y = cell
 
     # draw red dots on dead ends
-    self.debugDraw((x,y), [1,0,0], clear=False)
+    # self.debugDraw((x,y), [1,0,0], clear=False)
 
 
     points = []
     # points.append((x, y))
-    currentTime = time.time()
-    numbOfComputations = 0
 
     # dictionary of already visited cells
     visitedCells = {}
@@ -760,26 +774,24 @@ class DummyAttackAgent(CaptureAgent):
     while len(self.GetAdjacentCells((x, y), walls)) < 3 :
       listOfAdjacentCells = self.GetAdjacentCells((x, y), walls)
       
-
       # x, y = self.GetAdjacentCells((x, y), walls)[0]
 
       # find the unvisited adjacent cell
       for i in listOfAdjacentCells:
         if i not in visitedCells:
           x, y = i
+
           visitedCells[(x, y)] = True
           break
 
       points.append((x, y))
 
-      # draw orange dots on points
-      self.debugDraw(points[-1], [1,0.5,0], clear=False)
-      numbOfComputations += 1
+      # draw orange dots on points on points leading to dead ends
+      # self.debugDraw(points[-1], [1,0.5,0], clear=False)
+      
 
-      # if numbOfComputations > 30000:
-      #   break
-    # last point colored blue
-    self.debugDraw(points[-1], [0,0,1], clear=False)
+    # last point colored blue: entry point, point that has multiple actions but is adjasent to a dead end path
+    # self.debugDraw(points[-1], [0,0,1], clear=False)
 
     # pop last point
     if len(points) > 1:
@@ -793,6 +805,12 @@ class DeadEndQuantization:
   def __init__(self, point:Tuple, lengthOfDeadEnd:int):
     self.point = point
     self.lengthOfDeadEnd = lengthOfDeadEnd
+
+  def Leading2DeadEndInformation(self, indexFromStart:int, index2End:int): #[new]
+    """Saves information about index position relative to start and end of dead end path."""
+    self.indexFromStart = indexFromStart
+    self.index2End = index2End
+    
 
 
 
