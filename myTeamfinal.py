@@ -717,6 +717,7 @@ class DummyAttackAgent(CaptureAgent):
 
             # draw red dots on dead ends
             # self.debugDraw(dead_ends[-1], [1,0,0], clear=False)
+            self.debugDraw(listLeading2DeadEnds[-1], [1,0,0], clear=False)
 
             # loop through all points in listLeading2DeadEnds backwards and add to dictionary   [new]
             for i in range(len(listLeading2DeadEnds)-1, -1, -1):
@@ -724,10 +725,10 @@ class DummyAttackAgent(CaptureAgent):
               tempDEQ = DeadEndQuantization(listLeading2DeadEnds[i], len(listLeading2DeadEnds))
               
               # since going backwards, the index of the point in the list is len(listLeading2DeadEnds)-1-i, indexes left to dead end is i, so point i is last point before dead end
-              tempDEQ.Leading2DeadEndInformation(  len(listLeading2DeadEnds)-1-i, i) 
+              tempDEQ.Leading2DeadEndInformation(  len(listLeading2DeadEnds)-i, i+1) 
 
 
-              # print("index i = ", str(len(listLeading2DeadEnds)-1-i)+ " until dead end is "+ str(i)  )
+              print("index i = ", str(len(listLeading2DeadEnds)-i)+ " until dead end is "+ str(i+1)  )
               self.pointsInDeadEndPaths[listLeading2DeadEnds[i]] = tempDEQ
 
               # color point green
