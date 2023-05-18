@@ -111,6 +111,10 @@ class DummyAttackAgent(CaptureAgent):
     self.FindDeadEnds(gameState)
     print("Time to initialize: ", time.time() - startInit)
 
+    # get number of keys in dead end dictionary
+    self.dead_end_keys = len(self.deadEndQuantizationDict.keys())
+    print("Number of dead ends: ", self.dead_end_keys)
+
 
 
 
@@ -676,6 +680,9 @@ class DummyAttackAgent(CaptureAgent):
     walls = gameState.getWalls()
     dead_ends = []
     leadingToDeadEnd = []
+
+    # dictionary of DeadEndQuantization objects
+    self.deadEndQuantizationDict = {}
     
     # check if agent is red or blue so know x ranges
     if self.red:
@@ -688,8 +695,6 @@ class DummyAttackAgent(CaptureAgent):
 
     # iterate through all cells in the maze of opponent side
     for x in range(startPos, endPos):
-      y_temp = 1
-      
       for y in range(1, walls.height - 1):
         if not walls[x][y]:
           # if the number of adjacent cells that are walls is greater than 2, then it is a dead end
@@ -699,9 +704,13 @@ class DummyAttackAgent(CaptureAgent):
             # find all cells that lead to this dead end
             leadingToDeadEnd.append(self.GetAdjacentCells((x, y), walls))
 
-            self.FindPointsFromDeadEnd((x, y), walls)
+            listLeading2DeadEnds = self.FindPointsFromDeadEnd((x, y), walls)
 
+            # add last point in listLeading2DeadEnds to dictionary of DeadEndQuantization objects
+            self.deadEndQuantizationDict[listLeading2DeadEnds[-1]] = DeadEndQuantization(listLeading2DeadEnds[-1], len(listLeading2DeadEnds))
 
+            # color point yellow
+            self.debugDraw(listLeading2DeadEnds[-1], [1,1,0], clear=False)
 
             # draw red dots on dead ends
             # self.debugDraw(dead_ends[-1], [1,0,0], clear=False)
@@ -751,7 +760,6 @@ class DummyAttackAgent(CaptureAgent):
     while len(self.GetAdjacentCells((x, y), walls)) < 3 :
       listOfAdjacentCells = self.GetAdjacentCells((x, y), walls)
       
-      
 
       # x, y = self.GetAdjacentCells((x, y), walls)[0]
 
@@ -773,10 +781,18 @@ class DummyAttackAgent(CaptureAgent):
     # last point colored blue
     self.debugDraw(points[-1], [0,0,1], clear=False)
 
+    # pop last point
+    if len(points) > 1:
+      points.pop()
+    
+
     return points
 
 
-    
+class DeadEndQuantization:
+  def __init__(self, point:Tuple, lengthOfDeadEnd:int):
+    self.point = point
+    self.lengthOfDeadEnd = lengthOfDeadEnd
 
 
 
