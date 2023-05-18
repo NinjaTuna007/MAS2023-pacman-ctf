@@ -60,6 +60,7 @@ class DummyAttackAgent(CaptureAgent):
   """
 
   def registerInitialState(self, gameState):
+    startInit = time.time()
     """
     This method handles the initial setup of the
     agent to populate useful fields (such as what team
@@ -108,6 +109,7 @@ class DummyAttackAgent(CaptureAgent):
 
     # find dead ends
     self.FindDeadEnds(gameState)
+    print("Time to initialize: ", time.time() - startInit)
 
 
 
@@ -768,6 +770,8 @@ class DummyAttackAgent(CaptureAgent):
 
       # if numbOfComputations > 30000:
       #   break
+    # last point colored blue
+    self.debugDraw(points[-1], [0,0,1], clear=False)
 
     return points
 
