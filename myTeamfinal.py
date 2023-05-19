@@ -168,7 +168,7 @@ class DummyAttackAgent(CaptureAgent):
 
     # if terminal state    
     if gameState.isOver():
-      val = gameState.getScore()
+      val = gameState.getScore() * 1000
       return val
     
     # initialize variables for food carrying
@@ -198,6 +198,9 @@ class DummyAttackAgent(CaptureAgent):
     # start at 1000, reduce to 250 around half time
     explore_v_exploit = 500
 
+    # # if you're on the center line, just come back already
+    # if self.center_dist_from_pos_dict[gameState.getAgentPosition(self.index)][0] <= 2:
+    #   explore_v_exploit = 0
 
     food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * explore_v_exploit # food carrying is important
 
@@ -975,7 +978,7 @@ class DummyDefenseAgent(CaptureAgent):
 
     # if terminal state    
     if gameState.isOver():
-      val = gameState.getScore()
+      val = gameState.getScore() * 1000
       return val
     
     TeamFoodCarrying = 0
