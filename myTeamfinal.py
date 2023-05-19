@@ -168,7 +168,7 @@ class DummyAttackAgent(CaptureAgent):
 
     # if terminal state    
     if gameState.isOver():
-      val = gameState.getScore() * 1000000
+      val = gameState.getScore() * 1000000 + 1000000000
       return val
     
     # initialize variables for food carrying
@@ -978,7 +978,7 @@ class DummyDefenseAgent(CaptureAgent):
 
     # if terminal state    
     if gameState.isOver():
-      val = gameState.getScore() * 1000000
+      val = gameState.getScore() * 1000000 + 1000000000
       return val
     
     TeamFoodCarrying = 0
