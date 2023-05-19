@@ -686,6 +686,9 @@ class DummyAttackAgent(CaptureAgent):
 
     # dictionary of points in dead end paths
     self.pointsInDeadEndPaths = {}
+
+    # list to save points not regarded as dead ends
+    self.pointsNotDeadEnds = []
     
     # check if agent is red or blue so know x ranges
     if self.red:
@@ -700,6 +703,7 @@ class DummyAttackAgent(CaptureAgent):
     for x in range(startPos, endPos):
       for y in range(1, walls.height - 1):
         if not walls[x][y]:
+
           # if the number of adjacent cells that are walls is greater than 2, then it is a dead end
           if len([i for i in self.GetAdjacentCells((x, y), walls)   ]) == 1: # if not walls[i[0]][i[1]]
             dead_ends.append((x, y))
@@ -717,24 +721,46 @@ class DummyAttackAgent(CaptureAgent):
 
             # draw red dots on dead ends
             # self.debugDraw(dead_ends[-1], [1,0,0], clear=False)
-            self.debugDraw(listLeading2DeadEnds[-1], [1,0,0], clear=False)
+            
 
             # loop through all points in listLeading2DeadEnds backwards and add to dictionary   [new]
             for i in range(len(listLeading2DeadEnds)-1, -1, -1):
               # temporary deadendquantization object
               tempDEQ = DeadEndQuantization(listLeading2DeadEnds[i], len(listLeading2DeadEnds))
+              print(str(listLeading2DeadEnds[i]))
               
               # since going backwards, the index of the point in the list is len(listLeading2DeadEnds)-1-i, indexes left to dead end is i, so point i is last point before dead end
               tempDEQ.Leading2DeadEndInformation(  len(listLeading2DeadEnds)-i, i+1) 
 
 
-              print("index i = ", str(len(listLeading2DeadEnds)-i)+ " until dead end is "+ str(i+1)  )
+              # print("index i = ", str(len(listLeading2DeadEnds)-i)+ " until dead end is "+ str(i+1)  )
               self.pointsInDeadEndPaths[listLeading2DeadEnds[i]] = tempDEQ
 
               # color point green
               # self.debugDraw(listLeading2DeadEnds[i], [0,1,0], clear=False)
+            
+          # else:
+          else:
+            self.pointsNotDeadEnds.append((x, y))
+            # self.deadEndQuantizationDict[(x, y)] = DeadEndQuantization(None, None)
+          #   # point is not a dead end, we add it to dictionary but set position as None
+          #   if not (x, y) in self.deadEndQuantizationDict:
+          #     self.deadEndQuantizationDict[(x, y)] = DeadEndQuantization(None, None)
+          #     # color magenta
+          #     self.debugDraw((x, y), [1,0,1], clear=False)
 
-
+      # loop through pointsNotDeadEnds and check if they are in deadEndQuantizationDict
+      # if not, add to deadEndQuantizationDict
+    
+    for point in self.pointsNotDeadEnds:
+      print(str(point))
+      if not point in self.deadEndQuantizationDict and not point in self.pointsInDeadEndPaths:
+        # add points that are not in dead end path to dictionary but set position as None
+        self.pointsInDeadEndPaths[point] = DeadEndQuantization(None, None)
+        
+        # color magenta
+        # self.debugDraw(point, [1,0,1], clear=False)
+    
 
     return dead_ends
 
