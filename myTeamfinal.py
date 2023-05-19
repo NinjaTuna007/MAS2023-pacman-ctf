@@ -316,9 +316,8 @@ class DummyAttackAgent(CaptureAgent):
         # incorporate information about dead ends
         if chase_factor != 1:
           for i in range(len(foodList)):
-            if foodList[i] in self.pointsInDeadEndPaths:
-              # object
-              wow_object = self.pointsInDeadEndPaths[foodList[i]]
+            wow_object = self.pointsInDeadEndPaths[foodList[i]]
+            if wow_object.point != None:
               food_dist_list[i] += 200 * ((1 + wow_object.indexFromStart) / wow_object.lengthOfDeadEnd) / chase_factor
 
         # sort food list by distance
