@@ -125,6 +125,24 @@ class DummyAttackAgent(CaptureAgent):
     self.dead_end_keys = len(self.deadEndQuantizationDict.keys())
     # print("Number of dead ends: ", self.dead_end_keys)
 
+
+    # debug confirmation of all points in dictionary
+    # startPos = (gameState.data.layout.width//2)
+    # endPos = gameState.data.layout.width - 1
+    # for x in range(startPos, endPos):
+    #   for y in range(1,gameState.data.layout.height - 1):
+    #     #if not wall
+    #     if not gameState.hasWall(x,y):
+    #       # check if self.pointsInDeadEndPaths.keys()
+    #       positionInfo = self.pointsInDeadEndPaths[(x,y)]
+    #       if positionInfo.point ==None:
+    #         # draw yellow
+    #         self.debugDraw([(x,y)], [1,0,0], clear=False)
+    #       else:
+    #         # draw green
+    #         self.debugDraw([(x,y)], [0,1,0], clear=False)
+          
+            
     
 
 
