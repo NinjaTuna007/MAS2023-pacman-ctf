@@ -109,7 +109,7 @@ class DummyAttackAgent(CaptureAgent):
 
     # find dead ends
     self.FindDeadEnds(gameState)
-    print("Time to initialize: ", time.time() - startInit)
+    # print("Time to initialize: ", time.time() - startInit)
 
     # get number of keys in dead end dictionary
     self.dead_end_keys = len(self.deadEndQuantizationDict.keys())
@@ -289,7 +289,7 @@ class DummyAttackAgent(CaptureAgent):
         enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
 
         if min(enemyGhostDistList) <= 2:
-          chase_factor = 0
+          chase_factor = 0.1
 
         # run from unscared enemy ghosts
         for i in range(len(unscaredEnemyGhostDistList)):
@@ -313,11 +313,18 @@ class DummyAttackAgent(CaptureAgent):
       if len(foodList) > 2:
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
 
-        # sort food list by distance
-        food_dist_list.sort()
+        # incorporate information about dead ends
+        if chase_factor != 1:
+          for i in range(len(foodList)):
+            if foodList[i] in self.pointsInDeadEndPaths:
+              # object
+              wow_object = self.pointsInDeadEndPaths[foodList[i]]
+              food_dist_list[i] += 200 * ((1 + wow_object.indexFromStart) / wow_object.lengthOfDeadEnd) / chase_factor
 
+        # sort food list by distance
+        # food_dist_list.sort()
         # retain only 5 closest food
-        food_dist_list = food_dist_list[:3]
+        # food_dist_list = food_dist_list[:3]
         
         food_val = 0
         food_decay_factor = math.exp(-foodCarrying/6)
@@ -627,7 +634,7 @@ class DummyAttackAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    depth_list = [6, 10, 14] # best IDS Scenario
+    depth_list = [2, 6, 10, 14] # best IDS Scenario
     # depth_list = [10] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
@@ -669,8 +676,8 @@ class DummyAttackAgent(CaptureAgent):
       best_action = depth_act_dict[best_depth]
 
       # print time taken for agent to choose action
-      # print("Time taken by Offense = ", time.time() - start_time)
-      # print("best_depth = ", best_depth)
+      print("Time taken by Offense = ", time.time() - start_time)
+      print("best_depth = ", best_depth)
 
       return best_action    
 
@@ -717,7 +724,7 @@ class DummyAttackAgent(CaptureAgent):
 
             # draw red dots on dead ends
             # self.debugDraw(dead_ends[-1], [1,0,0], clear=False)
-            self.debugDraw(listLeading2DeadEnds[-1], [1,0,0], clear=False)
+            # self.debugDraw(listLeading2DeadEnds[-1], [1,0,0], clear=False)
 
             # loop through all points in listLeading2DeadEnds backwards and add to dictionary   [new]
             for i in range(len(listLeading2DeadEnds)-1, -1, -1):
@@ -728,7 +735,7 @@ class DummyAttackAgent(CaptureAgent):
               tempDEQ.Leading2DeadEndInformation(  len(listLeading2DeadEnds)-i, i+1) 
 
 
-              print("index i = ", str(len(listLeading2DeadEnds)-i)+ " until dead end is "+ str(i+1)  )
+              # print("index i = ", str(len(listLeading2DeadEnds)-i)+ " until dead end is "+ str(i+1)  )
               self.pointsInDeadEndPaths[listLeading2DeadEnds[i]] = tempDEQ
 
               # color point green
@@ -876,6 +883,15 @@ class DummyDefenseAgent(CaptureAgent):
     self.kill_timer = 0
 
 
+    self.center_dist_from_pos_dict = {}
+
+    # for all traversable positions on the map
+    for i in range(gameState.data.layout.width):
+      for j in range(gameState.data.layout.height):
+        if not gameState.hasWall(i, j):
+          # calculate distance to center line
+          self.center_dist_from_pos_dict[(i, j)] = min([self.getMazeDistance((i, j), k) for k in self.center_line])
+
   def getSuccessor(self, gameState, action):
     """
     Finds the next successor which is a grid position (location tuple).
@@ -923,8 +939,8 @@ class DummyDefenseAgent(CaptureAgent):
 
 
     # use kill timer
-    if self.kill_timer > 0:
-      self.kill_timer -= 1
+    # if self.kill_timer > 0:
+      # self.kill_timer -= 1
       # value of a kill starts at 100000 and decreases as time passes
       # val += 100000 - self.kill_timer * 10000
 
@@ -997,7 +1013,7 @@ class DummyDefenseAgent(CaptureAgent):
       if self.prev_min_pac_dist == 1:
         # this means you just ate an enemy pacman
         val += 10000
-        self.kill_timer = 10
+        # self.kill_timer = 10
       elif self.prev_min_pac_dist == 5:
         val -= 10000
       # reset last_seen
@@ -1042,7 +1058,7 @@ class DummyDefenseAgent(CaptureAgent):
 
       # find least distance to center line for each food in defend_food_dist_list
 
-      food_risk = [ 1 / (min([self.getMazeDistance(i, j) for j in self.center_line]) + 1 ) for i in self.remainingFoodToDefend ]
+      food_risk = [ 1 / self.center_dist_from_pos_dict[i] for i in self.remainingFoodToDefend]
 
       # multiply food_risk by defend_food_dist_list
       mult_list = [food_risk[i] * defend_food_dist_list[i] for i in range(len(food_risk))]
@@ -1347,7 +1363,16 @@ class DummyDefenseAgent(CaptureAgent):
     # update remaining food to defend
     self.remainingFoodToDefend = foodList
 
-    depth_list = [6, 10, 14] # best IDS Scenario
+    # # find list of enemy pacs
+    # enemy_pac_list = self.getOpponents(gameState)
+    # enemy_pac_list = [i for i in enemy_pac_list if gameState.getAgentState(i).isPacman]
+    # enemy_pac_pos_list = [gameState.getAgentPosition(i) for i in enemy_pac_list if gameState.getAgentPosition(i) != None]
+
+    # if len(self.prev_enemy_pac_list) == len(enemy_pac_pos_list) + 1:
+    #   if self.prev_min_pac_dist == 1:
+    #     self.kill_timer = 10
+
+    depth_list = [2, 6, 10, 14] # best IDS Scenario
     # depth_list = [10] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
@@ -1389,8 +1414,8 @@ class DummyDefenseAgent(CaptureAgent):
       best_action = depth_act_dict[best_depth]
 
       # print time taken for agent to choose action
-      # print("Time taken by Defense = ", time.time() - start_time)
-      # print("best_depth = ", best_depth)
+      print("Time taken by Defense = ", time.time() - start_time)
+      print("best_depth = ", best_depth)
 
 
 
@@ -1409,6 +1434,11 @@ class DummyDefenseAgent(CaptureAgent):
     #         best_action = random.choice(actions)
 
     #   print("[defense] total time taken = ", time.time() - start_time)
+      
+      # if self.kill_timer > 0:
+      #   self.kill_timer -= 1
+
+
       return best_action    
     
 
