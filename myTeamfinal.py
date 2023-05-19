@@ -115,6 +115,8 @@ class DummyAttackAgent(CaptureAgent):
     self.dead_end_keys = len(self.deadEndQuantizationDict.keys())
     # print("Number of dead ends: ", self.dead_end_keys)
 
+    
+
 
 
 
@@ -722,6 +724,10 @@ class DummyAttackAgent(CaptureAgent):
             # add last point in listLeading2DeadEnds to dictionary of DeadEndQuantization objects
             self.deadEndQuantizationDict[listLeading2DeadEnds[-1]] = DeadEndQuantization(listLeading2DeadEnds[-1], len(listLeading2DeadEnds))
 
+            # entry point to dead end path set to none, add to pointsInDeadEndPaths but as None
+            self.pointsInDeadEndPaths[listLeading2DeadEnds[-1]] = DeadEndQuantization(None, None)
+            self.pointsInDeadEndPaths[(x,y)] = DeadEndQuantization(None, None)
+
             # color point yellow, drawing point that is first point in dead end path
             # self.debugDraw(listLeading2DeadEnds[-1], [1,1,0], clear=False)
 
@@ -733,7 +739,7 @@ class DummyAttackAgent(CaptureAgent):
             for i in range(len(listLeading2DeadEnds)-1, -1, -1):
               # temporary deadendquantization object
               tempDEQ = DeadEndQuantization(listLeading2DeadEnds[i], len(listLeading2DeadEnds))
-              print(str(listLeading2DeadEnds[i]))
+              # print(str(listLeading2DeadEnds[i]))
               
               # since going backwards, the index of the point in the list is len(listLeading2DeadEnds)-1-i, indexes left to dead end is i, so point i is last point before dead end
               tempDEQ.Leading2DeadEndInformation(  len(listLeading2DeadEnds)-i, i+1) 
@@ -746,8 +752,13 @@ class DummyAttackAgent(CaptureAgent):
               # self.debugDraw(listLeading2DeadEnds[i], [0,1,0], clear=False)
             
           # else:
-          else:
+          else: # not dead ends, to be added to pointsInDeadEndPaths but as None
             self.pointsNotDeadEnds.append((x, y))
+        # else: # is wall
+        #     self.pointsNotDeadEnds.append((x, y))
+
+
+
             # self.deadEndQuantizationDict[(x, y)] = DeadEndQuantization(None, None)
           #   # point is not a dead end, we add it to dictionary but set position as None
           #   if not (x, y) in self.deadEndQuantizationDict:
@@ -759,7 +770,7 @@ class DummyAttackAgent(CaptureAgent):
       # if not, add to deadEndQuantizationDict
     
     for point in self.pointsNotDeadEnds:
-      print(str(point))
+      # print(str(point))
       if not point in self.deadEndQuantizationDict and not point in self.pointsInDeadEndPaths:
         # add points that are not in dead end path to dictionary but set position as None
         self.pointsInDeadEndPaths[point] = DeadEndQuantization(None, None)
