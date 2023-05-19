@@ -678,7 +678,7 @@ class DummyAttackAgent(CaptureAgent):
 
     # print("depth_act_dict = ", depth_act_dict)
     if depth_act_dict == {}:
-      # print("Time taken by Defense = ", time.time() - start_time)
+      # print("Time taken by Offense = ", time.time() - start_time)
       print("Offense is Random")
       return random.choice(actions)
     else:
@@ -687,8 +687,8 @@ class DummyAttackAgent(CaptureAgent):
       best_action = depth_act_dict[best_depth]
 
       # print time taken for agent to choose action
-      print("Time taken by Offense = ", time.time() - start_time)
-      print("best_depth = ", best_depth)
+      # print("Time taken by Offense = ", time.time() - start_time)
+      # print("best_depth = ", best_depth)
 
       return best_action    
 
@@ -1457,8 +1457,8 @@ class DummyDefenseAgent(CaptureAgent):
       best_action = depth_act_dict[best_depth]
 
       # print time taken for agent to choose action
-      print("Time taken by Defense = ", time.time() - start_time)
-      print("best_depth = ", best_depth)
+      # print("Time taken by Defense = ", time.time() - start_time)
+      # print("best_depth = ", best_depth)
 
 
 
