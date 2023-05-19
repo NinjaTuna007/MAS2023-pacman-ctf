@@ -104,6 +104,16 @@ class DummyAttackAgent(CaptureAgent):
         if not gameState.hasWall(gameState.data.layout.width//2 - 1, i) and not gameState.hasWall(gameState.data.layout.width//2, i) and not gameState.hasWall(gameState.data.layout.width//2 + 1, i):
             self.center_line.append((gameState.data.layout.width/2, i))
 
+
+    self.center_dist_from_pos_dict = {}
+    # for all traversable positions on the map
+    for i in range(gameState.data.layout.width):
+      for j in range(gameState.data.layout.height):
+        if not gameState.hasWall(i, j):
+          # calculate distance to center line
+          wow_dist = min([self.getMazeDistance((i, j), k) for k in self.center_line])
+          self.center_dist_from_pos_dict[(i, j)] = (wow_dist, 1 / (wow_dist + 0.01) )
+
     # find total time steps
     self.total_time = gameState.data.timeleft
 
@@ -183,7 +193,7 @@ class DummyAttackAgent(CaptureAgent):
     start_dist = self.getMazeDistance(self.start, gameState.getAgentPosition(self.index))
 
     # distance to center line
-    center_dist = min([self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in self.center_line])
+    center_dist = self.center_dist_from_pos_dict[gameState.getAgentPosition(self.index)][0]
 
     start_dist = - center_dist
 
@@ -305,9 +315,9 @@ class DummyAttackAgent(CaptureAgent):
           closest_unscared_ghost_pos = unscaredEnemyGhostPosList[closest_unscared_ghost_index]
 
           # check if ghost is closer to grid center than I am
-          ghost_to_center_list = [self.getMazeDistance(closest_unscared_ghost_pos, i) for i in self.center_line]
+          ghost_to_center_dist = self.center_dist_from_pos_dict[closest_unscared_ghost_pos][0]
         
-          if min(ghost_to_center_list) > center_dist:
+          if ghost_to_center_dist > center_dist:
             val -= center_dist * 1.5
 
       if len(foodList) > 2:
@@ -915,7 +925,8 @@ class DummyDefenseAgent(CaptureAgent):
       for j in range(gameState.data.layout.height):
         if not gameState.hasWall(i, j):
           # calculate distance to center line
-          self.center_dist_from_pos_dict[(i, j)] = min([self.getMazeDistance((i, j), k) for k in self.center_line])
+          wow_dist = min([self.getMazeDistance((i, j), k) for k in self.center_line])
+          self.center_dist_from_pos_dict[(i, j)] = (wow_dist, 1 /(wow_dist + 0.01))
 
   def getSuccessor(self, gameState, action):
     """
@@ -1000,57 +1011,53 @@ class DummyDefenseAgent(CaptureAgent):
     # check list of enemy pacmans
     enemyPacList = [i for i in enemyList if gameState.getAgentState(i).isPacman and gameState.getAgentState(i).getPosition() != None]
 
-    # code from offensive agent
-
-    # # incentivize eating enemy pacman
-    # val += 100 /(len(enemyPacList) + 1)
-
-    # enemyList = [gameState.getAgentPosition(i) for i in enemyList]
-    # # remove None values
-    # enemy_pos_list = [i for i in enemyList if i != None]
-
-    # if len(enemy_pos_list) > 0:
-    #   enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
-
-    #   for i in range(len(enemy_dist_list)):
-    #       val -= enemy_dist_list[i] * 250
-
-    # end of code from offensive agent
-
-
-    # incentivize eating enemy pacman
-    if not amScared:
-      val += 1000 * len(enemyPacList)
-    else:
-      val -= 1000 * len(enemyPacList)
 
     enemy_pos_list = [gameState.getAgentPosition(i) for i in enemyPacList] # already filtered out None positions in enemyPacList
 
     enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemy_pos_list]
 
-    if len(enemy_pos_list) > 0 and not amScared:
+
+    # code from offensive agent
+
+    # # incentivize eating enemy pacman
+    if not amScared:
+
+      val += 1000 /(len(enemyPacList) + 1)
+      enemyList = [gameState.getAgentPosition(i) for i in enemyList]
+      # remove None values
       for i in range(len(enemy_dist_list)):
-        # find out how much food enemy has
-        food_carried = gameState.getAgentState(enemyList[i]).numCarrying
-        val += (50/ enemy_dist_list[i]) * math.exp(food_carried/3) # the more food enemy has, the more important it is to eat it
+        val -= enemy_dist_list[i] * 250
 
-    if (len(enemy_pos_list) == len(self.prev_enemy_pac_list) -1) and not amScared:
-      if self.prev_min_pac_dist == 1:
-        # this means you just ate an enemy pacman
-        val += 10000
-        # self.kill_timer = 10
-      elif self.prev_min_pac_dist == 5:
-        val -= 10000
-      # reset last_seen
-      # self.last_seen = []
+    # end of code from offensive agent
 
-    # reset self.prev_enemy_pac_list
-    self.prev_enemy_pac_list = enemy_pos_list
+
+    # incentivize eating enemy pacman
+    # if not amScared:
+    #   val += 1000 * len(enemyPacList)
+    # else:
+    #   val -= 1000 * len(enemyPacList)
+
+    # if len(enemy_pos_list) > 0 and not amScared:
+    #   for i in range(len(enemy_dist_list)):
+    #     # find out how much food enemy has
+    #     food_carried = gameState.getAgentState(enemyList[i]).numCarrying
+    #     val += (50/ enemy_dist_list[i]) * math.exp(food_carried/3) # the more food enemy has, the more important it is to eat it
+
+    # if (len(enemy_pos_list) == len(self.prev_enemy_pac_list) -1) and not amScared:
+    #   if self.prev_min_pac_dist == 1:
+    #     # this means you just ate an enemy pacman
+    #     val += 10000
+    #     # self.kill_timer = 10
+    #   elif self.prev_min_pac_dist == 5:
+    #     val -= 10000
+
+    # # reset self.prev_enemy_pac_list
+    # self.prev_enemy_pac_list = enemy_pos_list
     
-    if len(enemy_dist_list) > 0:
-      self.prev_min_pac_dist = min(enemy_dist_list)
-    else:
-      self.prev_min_pac_dist = math.inf
+    # if len(enemy_dist_list) > 0:
+    #   self.prev_min_pac_dist = min(enemy_dist_list)
+    # else:
+    #   self.prev_min_pac_dist = math.inf
 
     if amScared:
       val -= 20000 # try not to be scared  
@@ -1083,7 +1090,7 @@ class DummyDefenseAgent(CaptureAgent):
 
       # find least distance to center line for each food in defend_food_dist_list
 
-      food_risk = [ 1 / self.center_dist_from_pos_dict[i] for i in self.remainingFoodToDefend]
+      food_risk = [self.center_dist_from_pos_dict[i][1] for i in self.remainingFoodToDefend]
 
       # multiply food_risk by defend_food_dist_list
       mult_list = [food_risk[i] * defend_food_dist_list[i] for i in range(len(food_risk))]
@@ -1463,8 +1470,21 @@ class DummyDefenseAgent(CaptureAgent):
       # if self.kill_timer > 0:
       #   self.kill_timer -= 1
 
+    # enemy_pos_list = [gameState.getAgentPosition(i) for i in self.getOpponents(gameState) if gameState.getAgentPosition(i) != None]
 
-      return best_action    
+    # enemy_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), enemy_pos) for enemy_pos in enemy_pos_list]
+
+    # # reset self.prev_enemy_pac_list
+    # self.prev_enemy_pac_list = enemy_pos_list
+    
+    # if len(enemy_dist_list) > 0:
+    #   self.prev_min_pac_dist = min(enemy_dist_list)
+    # else:
+    #   self.prev_min_pac_dist = math.inf
+
+
+
+    return best_action    
     
 
 
