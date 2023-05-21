@@ -119,6 +119,8 @@ class DummyAttackAgent(CaptureAgent):
     # find total time steps
     self.total_time = gameState.data.timeleft
 
+    self.return_push = 1
+
     # find dead ends
     self.FindDeadEnds(gameState)
     # print("Time to initialize: ", time.time() - startInit)
@@ -292,7 +294,7 @@ class DummyAttackAgent(CaptureAgent):
 
     else: # if i am pacman, i.e., i am on the other side
       
-      val += center_dist + 200
+      val += (200 - center_dist * self.return_push)
 
       # check how much food i have in my stomach
       foodCarrying = gameState.getAgentState(self.index).numCarrying
@@ -745,6 +747,10 @@ class DummyAttackAgent(CaptureAgent):
     self.min_agent_dict = {}
     self.heurvalue_dict = {}
 
+    # am i pacman?
+    if not self.gameState.getAgentState(self.index).isPacman:
+      # reset return_push to 1
+      self.return_push = 1
 
     # iteratively deepening search
     start_time = time.time()
@@ -777,6 +783,9 @@ class DummyAttackAgent(CaptureAgent):
       # print time taken for agent to choose action
       # print("Time taken by Offense = ", time.time() - start_time)
       # print("best_depth = ", best_depth)
+
+      if best_action == Directions.STOP:
+        self.return_push += 0.1
 
       return best_action    
 
