@@ -22,6 +22,8 @@ import distanceCalculator
 import random, time, util, sys
 from util import nearestPoint
 from typing import List, Tuple # for type hinting
+# import numpy as np
+from numpy import sign
 
 
 #################
@@ -169,7 +171,8 @@ class DummyAttackAgent(CaptureAgent):
     # if terminal state    
     if gameState.isOver():
       val = gameState.getScore() * 1000000
-      val += 1000000000 * math.sign(val)
+      # val += 1000000000 * math.sign(val) # math has no function 'sign'
+      val += 1000000000 * sign(val)
       return val
     
     # initialize variables for food carrying
@@ -193,7 +196,7 @@ class DummyAttackAgent(CaptureAgent):
     # ------------food carrying heuristic---------
 
     # define explore vs exploit factor
-    time_left = gameState.data.timeleft
+    time_left = gameState.data.timeleft # not used
     # total time left is self.total_time
 
     # start at 1000, reduce to 250 around half time
@@ -214,12 +217,12 @@ class DummyAttackAgent(CaptureAgent):
     amPac = gameState.getAgentState(self.index).isPacman
 
     # distance between starting position and current position
-    start_dist = self.getMazeDistance(self.start, gameState.getAgentPosition(self.index))
+    start_dist = self.getMazeDistance(self.start, gameState.getAgentPosition(self.index)) # not used
 
     # distance to center line
     center_dist = self.center_dist_from_pos_dict[gameState.getAgentPosition(self.index)][0]
 
-    start_dist = - center_dist
+    start_dist = - center_dist # not used
 
 
     # i'm a ghost, but I am attack agent => push to other side
@@ -233,7 +236,7 @@ class DummyAttackAgent(CaptureAgent):
       enemyPacList = [gameState.getAgentState(i) for i in enemyList if (True or gameState.getAgentState(i).isPacman) and gameState.getAgentState(i).getPosition() != None]
       
       # incentivize eating enemy pacman
-      val += 100 /(len(enemyPacList) + 1)
+      val += 100 /(len(enemyPacList) + 1) # can be pre-computed
 
       enemyList = [gameState.getAgentPosition(i) for i in enemyList]
       # remove None values
@@ -268,13 +271,13 @@ class DummyAttackAgent(CaptureAgent):
       capsuleList = self.getCapsules(gameState)
 
       # if there are capsules
-      val += 1000 / (len(capsuleList) + 1)
+      val += 1000 / (len(capsuleList) + 1) # can be pre-computed
 
       if len(capsuleList) > 0:
           capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
 
           for i in range(len(capsule_dist_list)):
-            val += 100/capsule_dist_list[i]
+            val += 100/capsule_dist_list[i] # expensive to compute?
         
         # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
 
@@ -317,7 +320,7 @@ class DummyAttackAgent(CaptureAgent):
       # else:
       #   val -=  1000 / min(scaredEnemyGhostDistList)
 
-      chase_factor = 1/(len(enemyGhostPosList) + 1)
+      chase_factor = 1/(len(enemyGhostPosList) + 1) # can be pre-computed
 
       if len(enemyGhostPosList) > 0:
         enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
@@ -326,7 +329,7 @@ class DummyAttackAgent(CaptureAgent):
           chase_factor = 0.1
 
         # run from unscared enemy ghosts
-        for i in range(len(unscaredEnemyGhostDistList)):
+        for i in range(len(unscaredEnemyGhostDistList)): 
           val += unscaredEnemyGhostDistList[i]
 
         # chase scared enemy ghosts
@@ -360,7 +363,7 @@ class DummyAttackAgent(CaptureAgent):
         # food_dist_list = food_dist_list[:3]
         
         food_val = 0
-        food_decay_factor = math.exp(-foodCarrying/6)
+        food_decay_factor = math.exp(-foodCarrying/6) # can be pre-computed
         for i in range(len(food_dist_list)):
           food_val += (50/food_dist_list[i]) * food_decay_factor * chase_factor
 
@@ -380,14 +383,14 @@ class DummyAttackAgent(CaptureAgent):
 
     # get possible actions from current state
     actions = gameState.getLegalActions(self.index)
-    # check if possible actions are stor or reverse
+    # check if possible actions are stop or reverse
     reverse = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
     # check if reverse is in possible actions and if stop is in possible actions and that possible actions has length 2
     # penalizing if got to dead ends
     if reverse in actions and len(actions) == 2 and Directions.STOP in actions:
       carryingFood = gameState.getAgentState(self.index).numCarrying
       # less penalty if not carrying a lot of food
-      val -= math.exp(carryingFood) 
+      val -= math.exp(carryingFood) # can be pre-computed
     
 
 
@@ -409,7 +412,7 @@ class DummyAttackAgent(CaptureAgent):
     for action in gameState.getLegalActions(agentIndex = player_ID):
       # Ignore illegal actions
       if False and (action == Directions.STOP): # avoid staying put
-        continue
+        continue # unnessary, time consuming
 
       successor = gameState.generateSuccessor(player_ID, action)
       successors.append((successor, action))
@@ -445,10 +448,10 @@ class DummyAttackAgent(CaptureAgent):
 
     # find agent team based on agent_ID
     if agent_ID in blue_team:
-      team = blue_team
+      team = blue_team # unnecessary
       opponent_team = red_team
     else:
-      team = red_team
+      team = red_team # unnecessary
       opponent_team = blue_team
 
 
@@ -569,10 +572,10 @@ class DummyAttackAgent(CaptureAgent):
 
     # find agent team based on agent_ID
     if agent_ID in blue_team:
-      team = blue_team
+      team = blue_team # unnecessary
       opponent_team = red_team
     else:
-      team = red_team
+      team = red_team # unnecessary
       opponent_team = blue_team
 
     for successor, action in successor_list:
@@ -987,7 +990,8 @@ class DummyDefenseAgent(CaptureAgent):
     # if terminal state    
     if gameState.isOver():
       val = gameState.getScore() * 1000000
-      val += 1000000000 * math.sign(val)
+      # val += 1000000000 * math.sign(val) # math has no function 'sign'
+      val += 1000000000 * sign(val)
       return val
     
     TeamFoodCarrying = 0
