@@ -377,7 +377,7 @@ class DummyAttackAgent(CaptureAgent):
     wow_factor_object = self.pointsInDeadEndPaths[gameState.getAgentPosition(self.index)]
 
     if wow_factor_object.point != None:
-      val -= 250 * ((1 + wow_factor_object.indexFromStart) / wow_factor_object.lengthOfDeadEnd)
+      val -= 25 * (1 + wow_factor_object.indexFromStart)
 
 
 
