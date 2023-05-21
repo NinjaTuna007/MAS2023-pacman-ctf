@@ -162,6 +162,15 @@ class DummyAttackAgent(CaptureAgent):
     
     print("total init time = ", str(time.time() - startInit))
 
+    startTestTime = time.time()
+    # chase_factor = 1/(len(enemyGhostPosList) + 1) 
+    inve = 1/3
+    print("inve time " + str(time.time() - startTestTime)) 
+    startTestTime = time.time()
+    for i in range(2):
+      chase_factorTest = 1/(i + 1) 
+
+
 
 
     # debug confirmation of all points in dictionary
@@ -292,14 +301,16 @@ class DummyAttackAgent(CaptureAgent):
 
     else: # if i am pacman, i.e., i am on the other side
       
-      val += center_dist + 200
+      val +=  200 # center_dist +
 
       # check how much food i have in my stomach
       foodCarrying = gameState.getAgentState(self.index).numCarrying
       # if enough food in my stomach, go back to my side
       
       # define imperative in terms of food carrying
-      imperative_to_return = max(0, (foodCarrying - 4) / 8 )
+      imperative_to_return = max(0, (foodCarrying - 4) / 8 ) # todo
+      if imperative_to_return >1: imperative_to_return = 1 # ceiling imperitive to return
+      
 
       val -= center_dist * imperative_to_return
 
@@ -408,12 +419,12 @@ class DummyAttackAgent(CaptureAgent):
         
         food_val = 0
         # food_decay_factor = math.exp(-foodCarrying/6) # can be pre-computed
-        food_decay_factor = self.exp_food_decay_factor_dict[foodCarrying] # new: changed to pre-computed in dictionary
+        # food_decay_factor = self.exp_food_decay_factor_dict[foodCarrying] # new: changed to pre-computed in dictionary
 
-        if food_decay_factor != math.exp(-foodCarrying/6): print("exp_food_decay_factor_dict fucked up")
+        
 
         for i in range(len(food_dist_list)):
-          food_val += (50/food_dist_list[i]) * food_decay_factor * chase_factor
+          food_val += (50/food_dist_list[i])  * chase_factor # food_decay_factor
 
         val += food_val
 
@@ -735,7 +746,7 @@ class DummyAttackAgent(CaptureAgent):
     '''
 
     depth_list = [2, 6, 10, 14] # best IDS Scenario
-    # depth_list = [10] # no IDS for now 
+    # depth_list = [4] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
 
@@ -828,7 +839,8 @@ class DummyAttackAgent(CaptureAgent):
           # if the number of adjacent cells that are walls is greater than 1, then it is a dead end
           if len([i for i in self.GetAdjacentCells((x, y), walls)   ]) == 1: # if not walls[i[0]][i[1]]
             dead_ends.append((x, y))
-
+            self.pointsInDeadEndPaths[(x,y)] = DeadEndQuantization(x, y)
+            
             
 
             # find all cells that lead to this dead end
@@ -848,6 +860,7 @@ class DummyAttackAgent(CaptureAgent):
 
             # draw red dots on dead ends
             # self.debugDraw(dead_ends[-1], [1,0,0], clear=False)
+            
             
 
             # loop through all points in listLeading2DeadEnds backwards and add to dictionary   [new]
@@ -1526,7 +1539,7 @@ class DummyDefenseAgent(CaptureAgent):
     #     self.kill_timer = 10
 
     depth_list = [2, 6, 10, 14] # best IDS Scenario
-    # depth_list = [10] # no IDS for now 
+    # depth_list = [4] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
 
