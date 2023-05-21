@@ -22,6 +22,8 @@ import distanceCalculator
 import random, time, util, sys
 from util import nearestPoint
 from typing import List, Tuple # for type hinting
+# import numpy as np
+from numpy import sign
 
 
 #################
@@ -29,7 +31,7 @@ from typing import List, Tuple # for type hinting
 #################
 
 def createTeam(firstIndex, secondIndex, isRed,
-               first = 'DummyDefenseAgent', second = 'DummyDefenseAgent'):
+               first = 'DummyAttackAgent', second = 'DummyAttackAgent'):
   """
   This function should return a list of two agents that will form the
   team, initialized using firstIndex and secondIndex as their agent
@@ -168,7 +170,9 @@ class DummyAttackAgent(CaptureAgent):
 
     # if terminal state    
     if gameState.isOver():
-      val = gameState.getScore()
+      val = gameState.getScore() * 1000000
+      # val += 1000000000 * math.sign(val) # math has no function 'sign'
+      val += 1000000000 * sign(val)
       return val
     
     # initialize variables for food carrying
@@ -192,12 +196,15 @@ class DummyAttackAgent(CaptureAgent):
     # ------------food carrying heuristic---------
 
     # define explore vs exploit factor
-    time_left = gameState.data.timeleft
+    time_left = gameState.data.timeleft # not used
     # total time left is self.total_time
 
     # start at 1000, reduce to 250 around half time
     explore_v_exploit = 500
 
+    # # if you're on the center line, just come back already
+    # if self.center_dist_from_pos_dict[gameState.getAgentPosition(self.index)][0] <= 2:
+    #   explore_v_exploit = 0
 
     food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * explore_v_exploit # food carrying is important
 
@@ -210,12 +217,12 @@ class DummyAttackAgent(CaptureAgent):
     amPac = gameState.getAgentState(self.index).isPacman
 
     # distance between starting position and current position
-    start_dist = self.getMazeDistance(self.start, gameState.getAgentPosition(self.index))
+    start_dist = self.getMazeDistance(self.start, gameState.getAgentPosition(self.index)) # not used
 
     # distance to center line
     center_dist = self.center_dist_from_pos_dict[gameState.getAgentPosition(self.index)][0]
 
-    start_dist = - center_dist
+    start_dist = - center_dist # not used
 
 
     # i'm a ghost, but I am attack agent => push to other side
@@ -229,7 +236,7 @@ class DummyAttackAgent(CaptureAgent):
       enemyPacList = [gameState.getAgentState(i) for i in enemyList if (True or gameState.getAgentState(i).isPacman) and gameState.getAgentState(i).getPosition() != None]
       
       # incentivize eating enemy pacman
-      val += 100 /(len(enemyPacList) + 1)
+      val += 100 /(len(enemyPacList) + 1) # can be pre-computed
 
       enemyList = [gameState.getAgentPosition(i) for i in enemyList]
       # remove None values
@@ -264,13 +271,13 @@ class DummyAttackAgent(CaptureAgent):
       capsuleList = self.getCapsules(gameState)
 
       # if there are capsules
-      val += 1000 / (len(capsuleList) + 1)
+      val += 1000 / (len(capsuleList) + 1) # can be pre-computed
 
       if len(capsuleList) > 0:
           capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
 
           for i in range(len(capsule_dist_list)):
-            val += 100/capsule_dist_list[i]
+            val += 100/capsule_dist_list[i] # expensive to compute?
         
         # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
 
@@ -313,7 +320,7 @@ class DummyAttackAgent(CaptureAgent):
       # else:
       #   val -=  1000 / min(scaredEnemyGhostDistList)
 
-      chase_factor = 1/(len(enemyGhostPosList) + 1)
+      chase_factor = 1/(len(enemyGhostPosList) + 1) # can be pre-computed
 
       if len(enemyGhostPosList) > 0:
         enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
@@ -322,7 +329,7 @@ class DummyAttackAgent(CaptureAgent):
           chase_factor = 0.1
 
         # run from unscared enemy ghosts
-        for i in range(len(unscaredEnemyGhostDistList)):
+        for i in range(len(unscaredEnemyGhostDistList)): 
           val += unscaredEnemyGhostDistList[i]
 
         # chase scared enemy ghosts
@@ -356,27 +363,34 @@ class DummyAttackAgent(CaptureAgent):
         # food_dist_list = food_dist_list[:3]
         
         food_val = 0
-        food_decay_factor = math.exp(-foodCarrying/6)
+        food_decay_factor = math.exp(-foodCarrying/6) # can be pre-computed
         for i in range(len(food_dist_list)):
           food_val += (50/food_dist_list[i]) * food_decay_factor * chase_factor
 
         val += food_val
 
       else:
-        val -= center_dist * 1.5
+        val -= center_dist * 2 + 1000
+
+
+    # penalize being inside a dead end path
+    wow_factor_object = self.pointsInDeadEndPaths[gameState.getAgentPosition(self.index)]
+
+    if wow_factor_object.point != None:
+      val -= 25 * (1 + wow_factor_object.indexFromStart) / chase_factor
 
 
 
     # get possible actions from current state
     actions = gameState.getLegalActions(self.index)
-    # check if possible actions are stor or reverse
+    # check if possible actions are stop or reverse
     reverse = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
     # check if reverse is in possible actions and if stop is in possible actions and that possible actions has length 2
     # penalizing if got to dead ends
     if reverse in actions and len(actions) == 2 and Directions.STOP in actions:
       carryingFood = gameState.getAgentState(self.index).numCarrying
       # less penalty if not carrying a lot of food
-      val -= math.exp(carryingFood) 
+      val -= math.exp(carryingFood) # can be pre-computed
     
 
 
@@ -398,7 +412,7 @@ class DummyAttackAgent(CaptureAgent):
     for action in gameState.getLegalActions(agentIndex = player_ID):
       # Ignore illegal actions
       if False and (action == Directions.STOP): # avoid staying put
-        continue
+        continue # unnessary, time consuming
 
       successor = gameState.generateSuccessor(player_ID, action)
       successors.append((successor, action))
@@ -434,10 +448,10 @@ class DummyAttackAgent(CaptureAgent):
 
     # find agent team based on agent_ID
     if agent_ID in blue_team:
-      team = blue_team
+      team = blue_team # unnecessary
       opponent_team = red_team
     else:
-      team = red_team
+      team = red_team # unnecessary
       opponent_team = blue_team
 
 
@@ -558,10 +572,10 @@ class DummyAttackAgent(CaptureAgent):
 
     # find agent team based on agent_ID
     if agent_ID in blue_team:
-      team = blue_team
+      team = blue_team # unnecessary
       opponent_team = red_team
     else:
-      team = red_team
+      team = red_team # unnecessary
       opponent_team = blue_team
 
     for successor, action in successor_list:
@@ -663,8 +677,8 @@ class DummyAttackAgent(CaptureAgent):
     You should change this in your own agent.
     '''
 
-    depth_list = [2, 6, 10, 14] # best IDS Scenario
-    # depth_list = [10] # no IDS for now 
+    # depth_list = [2, 6, 10, 14] # best IDS Scenario
+    depth_list = [2] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
 
@@ -975,7 +989,9 @@ class DummyDefenseAgent(CaptureAgent):
 
     # if terminal state    
     if gameState.isOver():
-      val = gameState.getScore()
+      val = gameState.getScore() * 1000000
+      # val += 1000000000 * math.sign(val) # math has no function 'sign'
+      val += 1000000000 * sign(val)
       return val
     
     TeamFoodCarrying = 0
@@ -1433,8 +1449,8 @@ class DummyDefenseAgent(CaptureAgent):
     #   if self.prev_min_pac_dist == 1:
     #     self.kill_timer = 10
 
-    depth_list = [2, 6, 10, 14] # best IDS Scenario
-    # depth_list = [10] # no IDS for now 
+    # depth_list = [2, 6, 10, 14] # best IDS Scenario
+    depth_list = [2] # no IDS for now 
 
     total_compute_time = 0.995 # time left for the agent to choose an action
 
