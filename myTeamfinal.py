@@ -119,6 +119,8 @@ class DummyAttackAgent(CaptureAgent):
     # find total time steps
     self.total_time = gameState.data.timeleft
 
+    self.return_push = 0
+
     # find dead ends
     self.FindDeadEnds(gameState)
     # print("Time to initialize: ", time.time() - startInit)
@@ -301,7 +303,7 @@ class DummyAttackAgent(CaptureAgent):
 
     else: # if i am pacman, i.e., i am on the other side
       
-      val +=  200 # center_dist +
+      val += (200 - center_dist * self.return_push)
 
       # check how much food i have in my stomach
       foodCarrying = gameState.getAgentState(self.index).numCarrying
@@ -352,21 +354,20 @@ class DummyAttackAgent(CaptureAgent):
       unscaredEnemyGhostDistList = [enemyGhostDistList[i] for i in range(len(enemyGhostDistList)) if not enemyScaredList[i]]
 
 
-      if len(unscaredEnemyGhostPosList) > 0:
-        #check if there are any capsules to eat
-        capsuleList = self.getCapsules(gameState)
+      #check if there are any capsules to eat
+      capsuleList = self.getCapsules(gameState)
 
-        # if there are capsules
-        # val += 1000 / (len(capsuleList) + 1) # can be pre-computed
-        val += self.eatCapsuleReward[len(capsuleList)] # new: changed to pre-computed in dictionary
+      # if there are capsules
+      # val += 1000 / (len(capsuleList) + 1) # can be pre-computed
+      val += self.eatCapsuleReward[len(capsuleList)] # new: changed to pre-computed in dictionary
 
-        if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward messed up")
-        
-        if len(capsuleList) > 0:
-            capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
+      # if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward messed up")
+      
+      if len(capsuleList) > 0:
+          capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
 
-            for i in range(len(capsule_dist_list)):
-              val += 100/capsule_dist_list[i] # expensive to compute?
+          for i in range(len(capsule_dist_list)):
+            val += 100/capsule_dist_list[i] # expensive to compute?
 
       # # if no enemy ghosts are scared, then run away
       # if not any(enemyScaredList):
@@ -401,7 +402,7 @@ class DummyAttackAgent(CaptureAgent):
         
           if ghost_to_center_dist > center_dist:
             val -= center_dist * 1.5
-
+  
       if len(foodList) > 2:
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
 
@@ -437,7 +438,7 @@ class DummyAttackAgent(CaptureAgent):
     wow_factor_object = self.pointsInDeadEndPaths[gameState.getAgentPosition(self.index)]
 
     if wow_factor_object.point != None:
-      val -= 25 * (1 + wow_factor_object.indexFromStart) / chase_factor
+      val -= 25 * (1+ wow_factor_object.indexFromStart) / chase_factor
 
 
 
@@ -757,6 +758,10 @@ class DummyAttackAgent(CaptureAgent):
     self.min_agent_dict = {}
     self.heurvalue_dict = {}
 
+    # am i pacman?
+    if not gameState.getAgentState(self.index).isPacman:
+      # reset return_push to 1
+      self.return_push = 0
 
     # iteratively deepening search
     start_time = time.time()
@@ -789,6 +794,9 @@ class DummyAttackAgent(CaptureAgent):
       # print time taken for agent to choose action
       # print("Time taken by Offense = ", time.time() - start_time)
       # print("best_depth = ", best_depth)
+
+      if best_action == Directions.STOP:
+        self.return_push += 0.1
 
       return best_action    
 
