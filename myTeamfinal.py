@@ -277,7 +277,7 @@ class DummyAttackAgent(CaptureAgent):
 
     else: # if i am pacman, i.e., i am on the other side
       
-      val += (200 - (center_dist+1) * self.return_push)
+      val += (200 - (center_dist+10) * self.return_push)
       if self.return_push != 0 : print("push is "+ str(self.return_push))
 
       # check how much food i have in my stomach
