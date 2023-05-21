@@ -123,11 +123,11 @@ class DummyAttackAgent(CaptureAgent):
 
     # find dead ends
     self.FindDeadEnds(gameState)
-    # print("Time to initialize: ", time.time() - startInit)
+    
 
     # get number of keys in dead end dictionary
     self.dead_end_keys = len(self.deadEndQuantizationDict.keys())
-    # print("Number of dead ends: ", self.dead_end_keys)
+    
 
 
     self.exp_carryingFood_dict = {}
@@ -142,7 +142,7 @@ class DummyAttackAgent(CaptureAgent):
 
       self.exp_food_decay_factor_dict[i] = math.exp(-i/6)
 
-      # print("i = ", str(i), "exp = ", str(exp_carryingFood_dict[i]))
+      
     
 
     self.dict_eatingPacReward = {}
@@ -164,33 +164,10 @@ class DummyAttackAgent(CaptureAgent):
     
     print("total init time = ", str(time.time() - startInit))
 
-    startTestTime = time.time()
-    # chase_factor = 1/(len(enemyGhostPosList) + 1) 
-    inve = 1/3
-    # print("inve time " + str(time.time() - startTestTime)) 
-    startTestTime = time.time()
-    for i in range(2):
-      chase_factorTest = 1/(i + 1) 
 
 
 
 
-    # debug confirmation of all points in dictionary
-    # startPos = (gameState.data.layout.width//2)
-    # endPos = gameState.data.layout.width - 1
-    # for x in range(startPos, endPos):
-    #   for y in range(1,gameState.data.layout.height - 1):
-    #     #if not wall
-    #     if not gameState.hasWall(x,y):
-    #       # check if self.pointsInDeadEndPaths.keys()
-    #       positionInfo = self.pointsInDeadEndPaths[(x,y)]
-    #       if positionInfo.point ==None:
-    #         # draw yellow
-    #         self.debugDraw([(x,y)], [1,0,0], clear=False)
-    #       else:
-    #         # draw green
-    #         self.debugDraw([(x,y)], [0,1,0], clear=False)
-          
             
     
 
@@ -218,7 +195,6 @@ class DummyAttackAgent(CaptureAgent):
     # if terminal state    
     if gameState.isOver():
       val = gameState.getScore() * 1000000
-      # val += 1000000000 * math.sign(val) # math has no function 'sign'
       val += 1000000000 * sign(val)
       return val
     
@@ -244,14 +220,13 @@ class DummyAttackAgent(CaptureAgent):
 
     # define explore vs exploit factor
     time_left = gameState.data.timeleft # not used
-    # total time left is self.total_time
+    
 
     # start at 1000, reduce to 250 around half time
     explore_v_exploit = 500
 
     # # if you're on the center line, just come back already
-    # if self.center_dist_from_pos_dict[gameState.getAgentPosition(self.index)][0] <= 2:
-    #   explore_v_exploit = 0
+    
 
     food_carry_val = (TeamFoodCarrying - EnemyFoodCarrying) * explore_v_exploit # food carrying is important
 
@@ -283,10 +258,9 @@ class DummyAttackAgent(CaptureAgent):
       enemyPacList = [gameState.getAgentState(i) for i in enemyList if (True or gameState.getAgentState(i).isPacman) and gameState.getAgentState(i).getPosition() != None]
       
       # incentivize eating enemy pacman
-      # val += 100 /(len(enemyPacList) + 1) # can be pre-computed
       val += self.dict_eatingPacReward[len(enemyPacList)] # new: changed to pre-computed in dictionary
       
-      if self.dict_eatingPacReward[len(enemyPacList)] !=  100 /(len(enemyPacList) + 1): print("dict_eatingPacReward fucked up")
+      
 
       enemyList = [gameState.getAgentPosition(i) for i in enemyList]
       # remove None values
@@ -303,7 +277,8 @@ class DummyAttackAgent(CaptureAgent):
 
     else: # if i am pacman, i.e., i am on the other side
       
-      val += (200 - center_dist * self.return_push)
+      val += (200 - (center_dist+1) * self.return_push)
+      if self.return_push != 0 : print("push is "+ str(self.return_push))
 
       # check how much food i have in my stomach
       foodCarrying = gameState.getAgentState(self.index).numCarrying
@@ -318,13 +293,7 @@ class DummyAttackAgent(CaptureAgent):
 
       # find food and eat it
       foodList = self.getFood(gameState).asList()
-      
-      # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
-
-      # find closest food
-      # closest_food_dist = min(food_dist_list)
-      # closest_food_dist = min(closest_food_dist, closest_capsule_dist)
-      # val += 50/closest_food_dist
+            
 
       # check list of enemy ghosts
       enemyList = self.getOpponents(gameState)
@@ -344,12 +313,9 @@ class DummyAttackAgent(CaptureAgent):
           enemyScaredList.append(False)
 
       # make list of distances to scared enemy ghosts
-      # scaredEnemyGhostList = [enemyGhostList[i] for i in range(len(enemyGhostList)) if enemyScaredList[i]]
-      # scaredEnemyGhostPosList = [enemyGhostPosList[i] for i in range(len(enemyGhostPosList)) if enemyScaredList[i]]
       scaredEnemyGhostDistList = [enemyGhostDistList[i] for i in range(len(enemyGhostDistList)) if enemyScaredList[i]]
 
       # make list of distances to unscared enemy ghosts
-      # unscaredEnemyGhostList = [enemyGhostList[i] for i in range(len(enemyGhostList)) if not enemyScaredList[i]]
       unscaredEnemyGhostPosList = [enemyGhostPosList[i] for i in range(len(enemyGhostPosList)) if not enemyScaredList[i]]
       unscaredEnemyGhostDistList = [enemyGhostDistList[i] for i in range(len(enemyGhostDistList)) if not enemyScaredList[i]]
 
@@ -358,10 +324,9 @@ class DummyAttackAgent(CaptureAgent):
       capsuleList = self.getCapsules(gameState)
 
       # if there are capsules
-      # val += 1000 / (len(capsuleList) + 1) # can be pre-computed
       val += self.eatCapsuleReward[len(capsuleList)] # new: changed to pre-computed in dictionary
 
-      # if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward messed up")
+      
       
       if len(capsuleList) > 0:
           capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
@@ -369,12 +334,7 @@ class DummyAttackAgent(CaptureAgent):
           for i in range(len(capsule_dist_list)):
             val += 100/capsule_dist_list[i] # expensive to compute?
 
-      # # if no enemy ghosts are scared, then run away
-      # if not any(enemyScaredList):
-      #     for i in range(len(enemyGhostDistList)):
-      #         val += enemyGhostDistList[i] * 100
-      # else:
-      #   val -=  1000 / min(scaredEnemyGhostDistList)
+      
 
       chase_factor = 1/(len(enemyGhostPosList) + 1) # expensive to compute?
 
@@ -429,9 +389,9 @@ class DummyAttackAgent(CaptureAgent):
 
         val += food_val
 
-      else:
+      else: # if there are only 2 food left
         # val -= (center_dist * 2 + 1000)
-        val -= (center_dist * 2 + 300)
+        val -= (center_dist * 2 + 450)
 
 
     # penalize being inside a dead end path
@@ -454,10 +414,7 @@ class DummyAttackAgent(CaptureAgent):
       # val -= math.exp(carryingFood) # can be pre-computed
       val -= self.exp_carryingFood_dict[carryingFood] # new: changed to pre-computed in dictionary
 
-      # print("dict says "+ str(self.exp_carryingFood_dict[carryingFood]) + " and math says " + str(math.exp(carryingFood)))
       
-      # if self.exp_carryingFood_dict[carryingFood] != math.exp(carryingFood):
-      #   print("you fucked up")
 
       
     
