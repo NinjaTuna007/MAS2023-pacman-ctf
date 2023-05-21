@@ -299,7 +299,7 @@ class DummyAttackAgent(CaptureAgent):
       # if enough food in my stomach, go back to my side
       
       # define imperative in terms of food carrying
-      imperative_to_return = max(0, (foodCarrying - 3) / 5 )
+      imperative_to_return = max(0, (foodCarrying - 4) / 8 )
 
       val -= center_dist * imperative_to_return
 
@@ -314,7 +314,7 @@ class DummyAttackAgent(CaptureAgent):
       val += self.eatCapsuleReward[len(capsuleList)] # new: changed to pre-computed in dictionary
 
       if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward fucked up")
-
+      
       if len(capsuleList) > 0:
           capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
 
@@ -416,7 +416,8 @@ class DummyAttackAgent(CaptureAgent):
         val += food_val
 
       else:
-        val -= (center_dist * 2 + 1000)
+        # val -= (center_dist * 2 + 1000)
+        val -= (center_dist * 2 + 300)
 
 
     # penalize being inside a dead end path
