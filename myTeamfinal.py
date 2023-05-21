@@ -378,7 +378,7 @@ class DummyAttackAgent(CaptureAgent):
 
         # chase scared enemy ghosts
         for i in range(len(scaredEnemyGhostDistList)):
-          val += 1000 / scaredEnemyGhostDistList[i]
+          val += 1000 / (scaredEnemyGhostDistList[i] + 1e-5)
 
         # is the closest unscared ghost to my left or right?
         if len(unscaredEnemyGhostDistList) > 0:
