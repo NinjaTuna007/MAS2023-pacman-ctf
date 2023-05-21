@@ -416,14 +416,14 @@ class DummyAttackAgent(CaptureAgent):
         val += food_val
 
       else:
-        val -= center_dist * 1.5
+        val -= (center_dist * 2 + 1000)
 
 
     # penalize being inside a dead end path
     wow_factor_object = self.pointsInDeadEndPaths[gameState.getAgentPosition(self.index)]
 
     if wow_factor_object.point != None:
-      val -= 25 * (1 + wow_factor_object.indexFromStart)
+      val -= 25 * (1 + wow_factor_object.indexFromStart) / chase_factor
 
 
 
