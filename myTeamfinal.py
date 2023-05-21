@@ -305,28 +305,13 @@ class DummyAttackAgent(CaptureAgent):
 
       # find food and eat it
       foodList = self.getFood(gameState).asList()
-
-      #check if there are any capsules to eat
-      capsuleList = self.getCapsules(gameState)
-
-      # if there are capsules
-      # val += 1000 / (len(capsuleList) + 1) # can be pre-computed
-      val += self.eatCapsuleReward[len(capsuleList)] # new: changed to pre-computed in dictionary
-
-      if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward fucked up")
       
-      if len(capsuleList) > 0:
-          capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
+      # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
 
-          for i in range(len(capsule_dist_list)):
-            val += 100/capsule_dist_list[i] # expensive to compute?
-        
-        # todo: 2 rewards, capsule more valuable, compare values, values depending on distance + gain
-
-        # find closest food
-        # closest_food_dist = min(food_dist_list)
-        # closest_food_dist = min(closest_food_dist, closest_capsule_dist)
-        # val += 50/closest_food_dist
+      # find closest food
+      # closest_food_dist = min(food_dist_list)
+      # closest_food_dist = min(closest_food_dist, closest_capsule_dist)
+      # val += 50/closest_food_dist
 
       # check list of enemy ghosts
       enemyList = self.getOpponents(gameState)
@@ -354,6 +339,23 @@ class DummyAttackAgent(CaptureAgent):
       # unscaredEnemyGhostList = [enemyGhostList[i] for i in range(len(enemyGhostList)) if not enemyScaredList[i]]
       unscaredEnemyGhostPosList = [enemyGhostPosList[i] for i in range(len(enemyGhostPosList)) if not enemyScaredList[i]]
       unscaredEnemyGhostDistList = [enemyGhostDistList[i] for i in range(len(enemyGhostDistList)) if not enemyScaredList[i]]
+
+
+      if len(unscaredEnemyGhostPosList) > 0:
+        #check if there are any capsules to eat
+        capsuleList = self.getCapsules(gameState)
+
+        # if there are capsules
+        # val += 1000 / (len(capsuleList) + 1) # can be pre-computed
+        val += self.eatCapsuleReward[len(capsuleList)] # new: changed to pre-computed in dictionary
+
+        if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward messed up")
+        
+        if len(capsuleList) > 0:
+            capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
+
+            for i in range(len(capsule_dist_list)):
+              val += 100/capsule_dist_list[i] # expensive to compute?
 
       # # if no enemy ghosts are scared, then run away
       # if not any(enemyScaredList):
@@ -1142,8 +1144,10 @@ class DummyDefenseAgent(CaptureAgent):
       val += 1000 /(len(enemyPacList) + 1)
       enemyList = [gameState.getAgentPosition(i) for i in enemyList]
       # remove None values
-      for i in range(len(enemy_dist_list)):
-        val -= enemy_dist_list[i] * 250
+      # for i in range(len(enemy_dist_list)):
+        # val -= enemy_dist_list[i] * 250
+      if len(enemy_dist_list) > 0:
+        val -= min(enemy_dist_list) * 250
 
     # end of code from offensive agent
 
