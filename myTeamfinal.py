@@ -341,21 +341,20 @@ class DummyAttackAgent(CaptureAgent):
       unscaredEnemyGhostDistList = [enemyGhostDistList[i] for i in range(len(enemyGhostDistList)) if not enemyScaredList[i]]
 
 
-      if len(unscaredEnemyGhostPosList) > 0:
-        #check if there are any capsules to eat
-        capsuleList = self.getCapsules(gameState)
+      #check if there are any capsules to eat
+      capsuleList = self.getCapsules(gameState)
 
-        # if there are capsules
-        # val += 1000 / (len(capsuleList) + 1) # can be pre-computed
-        val += self.eatCapsuleReward[len(capsuleList)] # new: changed to pre-computed in dictionary
+      # if there are capsules
+      # val += 1000 / (len(capsuleList) + 1) # can be pre-computed
+      val += self.eatCapsuleReward[len(capsuleList)] # new: changed to pre-computed in dictionary
 
-        if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward messed up")
-        
-        if len(capsuleList) > 0:
-            capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
+      if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward messed up")
+      
+      if len(capsuleList) > 0:
+          capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
 
-            for i in range(len(capsule_dist_list)):
-              val += 100/capsule_dist_list[i] # expensive to compute?
+          for i in range(len(capsule_dist_list)):
+            val += 100/capsule_dist_list[i] # expensive to compute?
 
       # # if no enemy ghosts are scared, then run away
       # if not any(enemyScaredList):
