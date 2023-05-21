@@ -370,6 +370,13 @@ class DummyAttackAgent(CaptureAgent):
         val -= center_dist * 1.5
 
 
+    # penalize being inside a dead end path
+    wow_factor_object = self.pointsInDeadEndPaths[gameState.getAgentPosition(self.index)]
+
+    if wow_factor_object.point != None:
+      val -= 250 * ((1 + wow_factor_object.indexFromStart) / wow_factor_object.lengthOfDeadEnd)
+
+
 
     # get possible actions from current state
     actions = gameState.getLegalActions(self.index)
