@@ -128,6 +128,42 @@ class DummyAttackAgent(CaptureAgent):
     # print("Number of dead ends: ", self.dead_end_keys)
 
 
+    self.exp_carryingFood_dict = {}
+    self.exp_food_decay_factor_dict = {}
+    # for i in range (0, food on enemy side):
+    # food to eat
+    food2eat = self.getFood(gameState).asList()
+    # get number of food to eat
+    num_food2eat = len(food2eat)
+    for i in range(num_food2eat + 2): # +1 is sufficient but +2 for safety
+      self.exp_carryingFood_dict[i] = math.exp(i)
+
+      self.exp_food_decay_factor_dict[i] = math.exp(-i/6)
+
+      # print("i = ", str(i), "exp = ", str(exp_carryingFood_dict[i]))
+    
+
+    self.dict_eatingPacReward = {}
+    # get enemy indexes 
+    enemyList = self.getOpponents(gameState)
+    # for i in (1, number of enemies+1)
+    for i in range(len(enemyList) +2):
+      self.dict_eatingPacReward[i] = 100/(i+1)
+
+
+
+    # get capsules on enemy side
+    capsules2eat = self.getCapsules(gameState)
+    self.eatCapsuleReward = {}
+    for i in range(len(capsules2eat)+2):
+      self.eatCapsuleReward[i] = 1000/(i+1)
+
+
+    
+    print("total init time = ", str(time.time() - startInit))
+
+
+
     # debug confirmation of all points in dictionary
     # startPos = (gameState.data.layout.width//2)
     # endPos = gameState.data.layout.width - 1
@@ -236,7 +272,10 @@ class DummyAttackAgent(CaptureAgent):
       enemyPacList = [gameState.getAgentState(i) for i in enemyList if (True or gameState.getAgentState(i).isPacman) and gameState.getAgentState(i).getPosition() != None]
       
       # incentivize eating enemy pacman
-      val += 100 /(len(enemyPacList) + 1) # can be pre-computed
+      # val += 100 /(len(enemyPacList) + 1) # can be pre-computed
+      val += self.dict_eatingPacReward[len(enemyPacList)] # new: changed to pre-computed in dictionary
+      
+      if self.dict_eatingPacReward[len(enemyPacList)] !=  100 /(len(enemyPacList) + 1): print("dict_eatingPacReward fucked up")
 
       enemyList = [gameState.getAgentPosition(i) for i in enemyList]
       # remove None values
@@ -271,7 +310,10 @@ class DummyAttackAgent(CaptureAgent):
       capsuleList = self.getCapsules(gameState)
 
       # if there are capsules
-      val += 1000 / (len(capsuleList) + 1) # can be pre-computed
+      # val += 1000 / (len(capsuleList) + 1) # can be pre-computed
+      val += self.eatCapsuleReward[len(capsuleList)] # new: changed to pre-computed in dictionary
+
+      if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward fucked up")
 
       if len(capsuleList) > 0:
           capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
@@ -320,7 +362,7 @@ class DummyAttackAgent(CaptureAgent):
       # else:
       #   val -=  1000 / min(scaredEnemyGhostDistList)
 
-      chase_factor = 1/(len(enemyGhostPosList) + 1) # can be pre-computed
+      chase_factor = 1/(len(enemyGhostPosList) + 1) # expensive to compute?
 
       if len(enemyGhostPosList) > 0:
         enemyGhostDistList = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in enemyGhostPosList]
@@ -363,7 +405,11 @@ class DummyAttackAgent(CaptureAgent):
         # food_dist_list = food_dist_list[:3]
         
         food_val = 0
-        food_decay_factor = math.exp(-foodCarrying/6) # can be pre-computed
+        # food_decay_factor = math.exp(-foodCarrying/6) # can be pre-computed
+        food_decay_factor = self.exp_food_decay_factor_dict[foodCarrying] # new: changed to pre-computed in dictionary
+
+        if food_decay_factor != math.exp(-foodCarrying/6): print("exp_food_decay_factor_dict fucked up")
+
         for i in range(len(food_dist_list)):
           food_val += (50/food_dist_list[i]) * food_decay_factor * chase_factor
 
@@ -390,7 +436,15 @@ class DummyAttackAgent(CaptureAgent):
     if reverse in actions and len(actions) == 2 and Directions.STOP in actions:
       carryingFood = gameState.getAgentState(self.index).numCarrying
       # less penalty if not carrying a lot of food
-      val -= math.exp(carryingFood) # can be pre-computed
+      # val -= math.exp(carryingFood) # can be pre-computed
+      val -= self.exp_carryingFood_dict[carryingFood] # new: changed to pre-computed in dictionary
+
+      # print("dict says "+ str(self.exp_carryingFood_dict[carryingFood]) + " and math says " + str(math.exp(carryingFood)))
+      
+      # if self.exp_carryingFood_dict[carryingFood] != math.exp(carryingFood):
+      #   print("you fucked up")
+
+      
     
 
 
@@ -733,6 +787,7 @@ class DummyAttackAgent(CaptureAgent):
 
     # dictionary of DeadEndQuantization objects
     self.deadEndQuantizationDict = {}
+    visitedPoints = {} # dictionary of points that have been visited
 
     # dictionary of points in dead end paths
     self.pointsInDeadEndPaths = {}
@@ -753,10 +808,25 @@ class DummyAttackAgent(CaptureAgent):
     for x in range(startPos, endPos):
       for y in range(1, walls.height - 1):
         if not walls[x][y]:
+          # visitedPoints[(x, y)] = True
 
-          # if the number of adjacent cells that are walls is greater than 2, then it is a dead end
+          # adjacentCells = self.GetAdjacentCells((x, y), walls)
+          # # if all points in adjacentCells have already been visited
+          # hasVisited = [visitedPoints[i] for i in adjacentCells if i in visitedPoints]
+          # if all(hasVisited) and len(hasVisited)>1:
+          #   # draw red on those points
+          #   for i in adjacentCells:
+          #     # self.debugDraw((x,y), [1,0,0], clear=False)
+          #     self.debugDraw(i, [1,0,0], clear=False)
+          #     #color yellow
+          #     self.debugDraw((x,y), [1,1,0], clear=False)
+              
+
+          # if the number of adjacent cells that are walls is greater than 1, then it is a dead end
           if len([i for i in self.GetAdjacentCells((x, y), walls)   ]) == 1: # if not walls[i[0]][i[1]]
             dead_ends.append((x, y))
+
+            
 
             # find all cells that lead to this dead end
             leadingToDeadEnd.append(self.GetAdjacentCells((x, y), walls))
@@ -992,6 +1062,7 @@ class DummyDefenseAgent(CaptureAgent):
       val = gameState.getScore() * 1000000
       # val += 1000000000 * math.sign(val) # math has no function 'sign'
       val += 1000000000 * sign(val)
+      print("game is over!!!!!!!!!!!!!!")
       return val
     
     TeamFoodCarrying = 0
