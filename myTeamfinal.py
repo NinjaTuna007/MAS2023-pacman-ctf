@@ -260,7 +260,7 @@ class DummyAttackAgent(CaptureAgent):
       # incentivize eating enemy pacman
       val += self.dict_eatingPacReward[len(enemyPacList)] # new: changed to pre-computed in dictionary
       
-      if self.dict_eatingPacReward[len(enemyPacList)] !=  100 /(len(enemyPacList) + 1): print("dict_eatingPacReward fucked up")
+      
 
       enemyList = [gameState.getAgentPosition(i) for i in enemyList]
       # remove None values
@@ -277,7 +277,7 @@ class DummyAttackAgent(CaptureAgent):
 
     else: # if i am pacman, i.e., i am on the other side
       
-      val += (200 - center_dist * self.return_push)
+      val += (200 - (center_dist+1) * self.return_push)
       if self.return_push != 0 : print("push is "+ str(self.return_push))
 
       # check how much food i have in my stomach
@@ -414,10 +414,7 @@ class DummyAttackAgent(CaptureAgent):
       # val -= math.exp(carryingFood) # can be pre-computed
       val -= self.exp_carryingFood_dict[carryingFood] # new: changed to pre-computed in dictionary
 
-      # print("dict says "+ str(self.exp_carryingFood_dict[carryingFood]) + " and math says " + str(math.exp(carryingFood)))
       
-      # if self.exp_carryingFood_dict[carryingFood] != math.exp(carryingFood):
-      #   print("you fucked up")
 
       
     
