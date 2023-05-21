@@ -370,7 +370,7 @@ class DummyAttackAgent(CaptureAgent):
         val += food_val
 
       else:
-        val -= center_dist * 2 + 1000
+        val -= (center_dist * 2 + 1000)
 
 
     # penalize being inside a dead end path
