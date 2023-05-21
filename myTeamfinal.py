@@ -119,7 +119,7 @@ class DummyAttackAgent(CaptureAgent):
     # find total time steps
     self.total_time = gameState.data.timeleft
 
-    self.return_push = 1
+    self.return_push = 0
 
     # find dead ends
     self.FindDeadEnds(gameState)
@@ -350,7 +350,7 @@ class DummyAttackAgent(CaptureAgent):
       # val += 1000 / (len(capsuleList) + 1) # can be pre-computed
       val += self.eatCapsuleReward[len(capsuleList)] # new: changed to pre-computed in dictionary
 
-      if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward messed up")
+      # if self.eatCapsuleReward[len(capsuleList)] != 1000 / (len(capsuleList) + 1): print("eatCapsuleReward messed up")
       
       if len(capsuleList) > 0:
           capsule_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in capsuleList]
@@ -391,7 +391,7 @@ class DummyAttackAgent(CaptureAgent):
         
           if ghost_to_center_dist > center_dist:
             val -= center_dist * 1.5
-
+  
       if len(foodList) > 2:
         food_dist_list = [self.getMazeDistance(gameState.getAgentPosition(self.index), i) for i in foodList]
 
@@ -427,7 +427,7 @@ class DummyAttackAgent(CaptureAgent):
     wow_factor_object = self.pointsInDeadEndPaths[gameState.getAgentPosition(self.index)]
 
     if wow_factor_object.point != None:
-      val -= 25 * (1 + wow_factor_object.indexFromStart) / chase_factor
+      val -= 25 * (1+ wow_factor_object.indexFromStart) / chase_factor
 
 
 
@@ -748,9 +748,9 @@ class DummyAttackAgent(CaptureAgent):
     self.heurvalue_dict = {}
 
     # am i pacman?
-    if not self.gameState.getAgentState(self.index).isPacman:
+    if not gameState.getAgentState(self.index).isPacman:
       # reset return_push to 1
-      self.return_push = 1
+      self.return_push = 0
 
     # iteratively deepening search
     start_time = time.time()
