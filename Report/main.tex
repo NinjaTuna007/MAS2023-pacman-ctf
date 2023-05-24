@@ -64,7 +64,7 @@
 \addbibresource{sources.bib}
 
 
-\title{Pacman capture the flag \\ Assignment 4 Report}
+\title{Pacman Capture the Flag \\ Assignment 4 Report}
 
 \author{\hspace*{-0.5cm}
 GROUP 03\\
@@ -95,12 +95,7 @@ sdup@kth.se & ashenawa@kth.se \\
 % why it is important to study
 
 % introduce pacman capture the flag problem
-
-
-
-
-
-
+This report presents a study on the development of AI agents for controlling a team of two in a competitive Pac-Man Capture the Flag (CTF) scenario. The objective of the agents is to maximize their score by efficiently collecting food from the enemy turf within a limited number of moves. This report studies various approaches used in the field of artificial intelligence, including minimax game tree search, modifications like alpha-beta pruning and move ordering, Monte Carlo Tree Search (MCTS), Expectimax, and decision-tree-based approaches, presents the final solution employed by the authors, and does a comparative analysis of the approaches utilized by all the teams in the competition. By analyzing and comparing these strategies, we aim to identify effective techniques for AI-controlled agents in Pac-Man CTF.
 
 \end{abstract}
 \clearpage
@@ -113,9 +108,6 @@ sdup@kth.se & ashenawa@kth.se \\
 Pacman capture the flag is a project developed by UC Berkely, it is a challenge that combines classic video game mechanics with artificial intelligence techniques. 
 The goal of the project is to develop an agent that can play the game of Pacman capture the flag. The game is played on a grid, where the agent can move in four directions, up, down, left and right. 
 The grid is split into two halves, in each half there is a team of Pacman agents, the goal of the game is to capture the food pellets from the other team's side and bring them back to your side while also preventing the other team from doing the same.
-
-
-
 
 
 
@@ -166,30 +158,57 @@ These problems and their solutions are addressed in further detail in the follow
 \label{rel_work}
 % Describe the related work in detail
 
-This section will discuss the related work in detail. 
+The success of AI agents in Pac-Man CTF heavily relies on the choice and implementation of appropriate strategies. This section provides an overview of the relevant research in this domain.
+
+\subsection{Minimax Game Tree Search}
+\label{subsec:minimax}
+The problem of finding the optimal move in a game can be formulated as a search problem. The search space is a tree, where each node represents a state of the game, and each edge represents a possible move. The root node represents the current state of the game, and the leaf nodes represent the terminal states of the game. The goal is to find the optimal path from the root node to a leaf node. 
+
+The minimax algorithm (shown in Algorithm \ref{alg:minimax}) is a recursive algorithm that computes the optimal move for a player in a two-player game. The algorithm assumes that the opponent plays optimally, and it tries to minimize the maximum loss that can be incurred by the player. It is a classic approach in Game Theory, aiming to find the optimal move in a two-player, zero-sum game. By constructing a game tree and evaluating the utility of different game states, the algorithm enables agents to make informed decisions. 
+
+Sometimes, however, it is not feasible to search the entire game tree, due to the large number of possible moves. To address this issue, the algorithm can be modified to limit the depth of the search tree. The algorithm can also be modified to incorporate heuristics that evaluate the utility of non-terminal game states. Variations of minimax, such as alpha-beta pruning, move ordering based on heuristics, iterative deepening search (IDS), and Repeated States Checking (RSC), have been proposed to improve its efficiency and effectiveness [1][2][3].
+
+\begin{algorithm}
+\caption{Minimax Algorithm}
+\label{alg:minimax}
+\begin{algorithmic}[1]
+\Procedure{Minimax}{$node, depth, maximizingPlayer$}
+\If{$depth = 0$ or $node$ is a terminal node}
+\State \textbf{return} the heuristic value of $node$
+\EndIf
+\If{$maximizingPlayer$}
+\State $value \gets -\infty$
+\For{each child of $node$}
+\State $value \gets \max(value, \text{Minimax}(child, depth-1, \text{False}))$
+\EndFor
+\State \textbf{return} $value$
+\Else
+\State $value \gets \infty$
+\For{each child of $node$}
+\State $value \gets \min(value, \text{Minimax}(child, depth-1, \text{True}))$
+\EndFor
+\State \textbf{return} $value$
+\EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Expectimax}
+\label{subsec:expectimax}
+Expectimax is a variant of the minimax algorithm that considers uncertain outcomes in games. It is commonly used in domains with probabilistic elements. In Pac-Man CTF, Expectimax can be employed to account for the ghost movement and uncertain states, enabling agents to make rational decisions under uncertainty [6].
+
+\subsection{Monte Carlo Tree Search}
+\label{subsec:mcts}
+MCTS is a sampling-based search algorithm that has demonstrated remarkable success in various game-playing domains. By combining tree exploration with random rollouts, MCTS performs effective exploration and exploitation of the search space. This approach has been applied to Pac-Man CTF, where agents simulate multiple playouts to estimate the value of different actions and make informed decisions [4][5].
 
 
+\subsection{Decision Tree Based Approaches}
+\label{subsec:decision_tree}
+Decision trees offer a structured representation of decision-making processes. By learning from historical data and constructing decision rules, decision-tree-based approaches provide an interpretable framework for agent behavior. These techniques have been explored in Pac-Man CTF, where agents use decision trees to guide their actions based on various game state features [7][8].
 
-
-\subsection{Collision Avoidance}
-\label{rel_work_collision}
-
-\paragraph{Relevance of the Problem}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\subsection{Hybrid Approaches}
+\label{subsec:hybrid}
+Several studies have proposed hybrid strategies by combining different AI techniques in Pac-Man CTF. For example, integrating MCTS with minimax or Expectimax algorithms has shown promise in improving agent performance [9][10]. Such hybrid approaches leverage the strengths of different methods to create robust and adaptable AI agents.
 
 
 
