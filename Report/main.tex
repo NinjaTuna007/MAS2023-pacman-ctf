@@ -105,14 +105,40 @@ This report presents a study on the development of AI agents for controlling a t
 \section{Introduction}
 % Describe the problem and importance in detail
 
-Pacman capture the flag is a project developed by UC Berkely, it is a challenge that combines classic video game mechanics with artificial intelligence techniques. 
+With the continious development of society and technology, the need for autonomous agents is increasing. It is becoming more and more important to develop agents that can operate in dynamic and complex environments autonomously.
+In this report we will explore the problem of developing an agent that can play the game of Pacman capture the flag. This is a project developed by UC Berkely, it is a challenge that combines classic video game mechanics with artificial intelligence techniques.
 The goal of the project is to develop an agent that can play the game of Pacman capture the flag. The game is played on a grid, where the agent can move in four directions, up, down, left and right. 
 The grid is split into two halves, in each half there is a team of Pacman agents, the goal of the game is to capture the food pellets from the other team's side and bring them back to your side while also preventing the other team from doing the same.
+Multiple aspects of artificial intelligence will be explored in this report, such as minimax game tree search, Monte Carlo Tree Search (MCTS), Expectimax, and decision-tree-based approaches. The final solution included the use of Minimax and alpha-beta pruning.
 
 
 
 
+% include new figure from folder figuresA4,
+% figure showing the game environment
+%insert figure
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=0.5\textwidth]{./figuresA4/pacman_illustration.png}
+  \caption{Illustration of environment}
+  \label{fig:drag_force}
+\end{figure}
 
+% description of figure
+The figure shows the game environment, the blue and red dots represent the food pellets, the blue and red lines represent the walls. 
+As seen in the figure above there are both Pacman and ghosts. The agent is a ghost when defending its own side. When crossing over to the enemy side to collect pellets it becomes a pacman.
+An agent can go into enemy territory and collect pellets, but the score will only increase when the agent returns back to its own side. In the figure there are also white pellets, 
+those are power pellets, when an agent collects a power pellet it can eat the enemy agents for a period of 40 moves. During that period the enemy ghost agents are regarded as scared.
+When an agent is eaten it respawns at its own side, if the agent was scared before getting eaten it will no longer be scared after respawning.
+
+The information each agent has access to is the following:
+\begin{itemize}
+  \item The friend agent's positions
+  \item The total score
+  \item The position of all the food pellets on the map, this is updated every time an agent moves
+  \item The position of all the power pellets on the map, this is updated every time an agent moves
+  \item The position of an enemy agent if it is within 5 squares of the agent or a teammate
+\end{itemize}
 
 
 
@@ -121,7 +147,7 @@ The grid is split into two halves, in each half there is a team of Pacman agents
 
 \subsection{Task Description}
 
-This report will discuss ....
+This report will discuss the problem of developing an agent that can play the game of Pacman capture the flag. The aim is to develop two agents which are able to defend their side of the map and also collect food pellets from the enemy side. The agents will be able to move in four directions, up, down, left and right. The agents 
 
 
 
@@ -134,7 +160,12 @@ These problems and their solutions are addressed in further detail in the follow
 \subsection{Contribution}
 % Describe the contribution of the report in detail
 
+In this report we will impement Minimax and alpha-beta pruning into the UC Berkeley Pacman Capture the Flag project. We will also explore the use of Monte Carlo Tree Search (MCTS), Expectimax, and decision-tree-based approaches.
+We will also compare the results of our solution with the results of other methods used for the same problem.
 
+An essential aspect of Pacman capture the flag is the ability to cooperate as a team and communicate with the other agent. 
+Potential real world applications of this project are many, as the ability of intelligent agents to make strategic decisions in a dynamic environment has many applications. 
+Applications include multi-robot system coordination, autonomous vehicles, and unmanned aerial vehicles.
 
 
 
@@ -143,6 +174,12 @@ These problems and their solutions are addressed in further detail in the follow
 
 
 \subsection{Outline}
+This report is organized as follows. First we introduce the problem and its importance in section \ref{sec:introduction}. 
+Then we discuss and highlight the related work and required backround knowledge in order to understand the proposed solution in section \ref{rel_work}.
+This is followed by a detailed description of the proposed solution in section \ref{method}.
+Next we present the experimental setup and the results in section \ref{sec:experiments_and_results}.
+Finally, we summarize the results and conclude the report in section \ref{sec:conclusion}.
+
 
 
 
@@ -249,7 +286,7 @@ In this section, we summarize the results of our experiments. We first present t
 
 
 \section{Summary and Conclusions}
-
+\label{sec:conclusion}
 
 
 
