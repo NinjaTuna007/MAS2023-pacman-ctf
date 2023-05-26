@@ -103,10 +103,11 @@ This report presents a study on the development of AI agents for controlling a t
 %% REMEMBER TO WRITE IN A TOP-DOWN FASHION, STARTING EACH SECTION WITH A SUMMARY. 
 
 \section{Introduction}
+\label{sec:introduction}
 % Describe the problem and importance in detail
 
 With the continious development of society and technology, the need for autonomous agents is increasing. It is becoming more and more important to develop agents that can operate in dynamic and complex environments autonomously.
-In this report we will explore the problem of developing an agent that can play the game of Pacman capture the flag. This is a project developed by UC Berkely, it is a challenge that combines classic video game mechanics with artificial intelligence techniques.
+In this report we will explore the problem of developing an agent that can play the game of Pacman capture the flag. This is a project developed by UC Berkely \cite{UCBContest2015}, it is a challenge that combines classic video game mechanics with artificial intelligence techniques.
 The goal of the project is to develop an agent that can play the game of Pacman capture the flag. The game is played on a grid, where the agent can move in four directions, up, down, left and right. 
 The grid is split into two halves, in each half there is a team of Pacman agents, the goal of the game is to capture the food pellets from the other team's side and bring them back to your side while also preventing the other team from doing the same.
 Multiple aspects of artificial intelligence will be explored in this report, such as minimax game tree search, Monte Carlo Tree Search (MCTS), Expectimax, and decision-tree-based approaches. The final solution included the use of Minimax and alpha-beta pruning.
@@ -174,11 +175,8 @@ Applications include multi-robot system coordination, autonomous vehicles, and u
 
 
 \subsection{Outline}
-This report is organized as follows. First we introduce the problem and its importance in section \ref{sec:introduction}. 
-Then we discuss and highlight the related work and required backround knowledge in order to understand the proposed solution in section \ref{rel_work}.
-This is followed by a detailed description of the proposed solution in section \ref{method}.
-Next we present the experimental setup and the results in section \ref{sec:experiments_and_results}.
-Finally, we summarize the results and conclude the report in section \ref{sec:conclusion}.
+This report is organized as follows. First we introduce the problem and its importance in Section \ref{sec:introduction}. Then we discuss and highlight the related work and required backround knowledge in order to understand the proposed solution in Section \ref{rel_work}. This is followed by a detailed description of the proposed solution in Section \ref{method}. Next, we present the experimental setup and the results in Section \ref{sec:experiments_and_results}.
+Finally, we summarize the results and conclude the report in Section \ref{sec:conclusion}.
 
 
 
@@ -201,9 +199,9 @@ The success of AI agents in Pac-Man CTF heavily relies on the choice and impleme
 \label{subsec:minimax}
 The problem of finding the optimal move in a game can be formulated as a search problem. The search space is a tree, where each node represents a state of the game, and each edge represents a possible move. The root node represents the current state of the game, and the leaf nodes represent the terminal states of the game. The goal is to find the optimal path from the root node to a leaf node. 
 
-The minimax algorithm (shown in Algorithm \ref{alg:minimax}) is a recursive algorithm that computes the optimal move for a player in a two-player game. The algorithm assumes that the opponent plays optimally, and it tries to minimize the maximum loss that can be incurred by the player. It is a classic approach in Game Theory, aiming to find the optimal move in a two-player, zero-sum game. By constructing a game tree and evaluating the utility of different game states, the algorithm enables agents to make informed decisions. 
+The minimax algorithm \cite{vonNeumann1944} (shown in Algorithm \ref{alg:minimax}) is a recursive algorithm that computes the optimal move for a player in a two-player game. The algorithm assumes that the opponent plays optimally, and it tries to minimize the maximum loss that can be incurred by the player. It is a classic approach in Game Theory, aiming to find the optimal move in a two-player, zero-sum game. By constructing a game tree and evaluating the utility of different game states, the algorithm enables agents to make informed decisions. 
 
-Sometimes, however, it is not feasible to search the entire game tree, due to the large number of possible moves. To address this issue, the algorithm can be modified to limit the depth of the search tree. The algorithm can also be modified to incorporate heuristics that evaluate the utility of non-terminal game states. Variations of minimax, such as alpha-beta pruning, move ordering based on heuristics, iterative deepening search (IDS), and Repeated States Checking (RSC), have been proposed to improve its efficiency and effectiveness [1][2][3].
+Sometimes, however, it is not feasible to search the entire game tree, due to the large number of possible moves. To address this issue, the algorithm can be modified to limit the depth of the search tree. The algorithm can also be modified to incorporate heuristics that evaluate the utility of non-terminal game states. Variations of minimax, such as alpha-beta pruning, move ordering based on heuristics, iterative deepening search (IDS), and Repeated States Checking (RSC), have been proposed to improve its efficiency and effectiveness \cite{CAMPBELL200257}.
 
 \begin{algorithm}
 \caption{Minimax Algorithm}
@@ -232,11 +230,11 @@ Sometimes, however, it is not feasible to search the entire game tree, due to th
 
 \subsection{Expectimax}
 \label{subsec:expectimax}
-Expectimax is a variant of the minimax algorithm that considers uncertain outcomes in games. It is commonly used in domains with probabilistic elements. In Pac-Man CTF, Expectimax can be employed to account for the ghost movement and uncertain states, enabling agents to make rational decisions under uncertainty [6].
+Expectimax is a variant of the minimax algorithm that considers uncertain outcomes in games. It is commonly used in domains with probabilistic elements. In Pac-Man CTF, Expectimax can be employed to account for the ghost movement and uncertain states, enabling agents to make rational decisions under uncertainty \cite{RIVEST198777}.
 
 \subsection{Monte Carlo Tree Search}
 \label{subsec:mcts}
-MCTS is a sampling-based search algorithm that has demonstrated remarkable success in various game-playing domains. By combining tree exploration with random rollouts, MCTS performs effective exploration and exploitation of the search space. This approach has been applied to Pac-Man CTF, where agents simulate multiple playouts to estimate the value of different actions and make informed decisions [4][5].
+MCTS is a sampling-based search algorithm that has demonstrated remarkable success in various game-playing domains. By combining tree exploration with random rollouts, MCTS performs effective exploration and exploitation of the search space. This approach has been applied to Pac-Man CTF, where agents simulate multiple playouts to estimate the value of different actions and make informed decisions \cite{GELLY20111856}.
 
 
 \subsection{Decision Tree Based Approaches}

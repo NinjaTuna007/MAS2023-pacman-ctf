@@ -16,5 +16,197 @@
   {}
 \endgroup
 
+
+\refsection{0}
+  \datalist[entry]{anyt/global//global/global}
+    \entry{CAMPBELL200257}{article}{}
+      \name{author}{3}{}{%
+        {{hash=0b29c33e62b9ff91d2cb5e73984c8017}{%
+           family={Campbell},
+           familyi={C\bibinitperiod},
+           given={Murray},
+           giveni={M\bibinitperiod}}}%
+        {{hash=1ee11fcd414bf4c15bef7cbff8ebca99}{%
+           family={Hoane},
+           familyi={H\bibinitperiod},
+           given={A.Joseph},
+           giveni={A\bibinitperiod}}}%
+        {{hash=f4b058d44f9e5ad050dd6317be214f0b}{%
+           family={Hsu},
+           familyi={H\bibinitperiod},
+           given={Feng-hsiung},
+           giveni={F\bibinithyphendelim h\bibinitperiod}}}%
+      }
+      \strng{namehash}{48895abef2eca3e38fdfdb88729f31a8}
+      \strng{fullhash}{48895abef2eca3e38fdfdb88729f31a8}
+      \strng{bibnamehash}{48895abef2eca3e38fdfdb88729f31a8}
+      \strng{authorbibnamehash}{48895abef2eca3e38fdfdb88729f31a8}
+      \strng{authornamehash}{48895abef2eca3e38fdfdb88729f31a8}
+      \strng{authorfullhash}{48895abef2eca3e38fdfdb88729f31a8}
+      \field{labelalpha}{CHH02}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Deep Blue is the chess machine that defeated then-reigning World Chess Champion Garry Kasparov in a six-game match in 1997. There were a number of factors that contributed to this success, including: •a single-chip chess search engine,•a massively parallel system with multiple levels of parallelism,•a strong emphasis on search extensions,•a complex evaluation function, and•effective use of a Grandmaster game database. This paper describes the Deep Blue system, and gives some of the rationale that went into the design decisions behind Deep Blue.}
+      \field{issn}{0004-3702}
+      \field{journaltitle}{Artificial Intelligence}
+      \field{number}{1}
+      \field{title}{Deep Blue}
+      \field{volume}{134}
+      \field{year}{2002}
+      \field{pages}{57\bibrangedash 83}
+      \range{pages}{27}
+      \verb{doi}
+      \verb https://doi.org/10.1016/S0004-3702(01)00129-1
+      \endverb
+      \verb{urlraw}
+      \verb https://www.sciencedirect.com/science/article/pii/S0004370201001291
+      \endverb
+      \verb{url}
+      \verb https://www.sciencedirect.com/science/article/pii/S0004370201001291
+      \endverb
+      \keyw{Computer chess,Game tree search,Parallel search,Selective search,Search extensions,Evaluation function}
+    \endentry
+    \entry{GELLY20111856}{article}{}
+      \name{author}{2}{}{%
+        {{hash=450963f966620925cb8fecd32f7a6ee1}{%
+           family={Gelly},
+           familyi={G\bibinitperiod},
+           given={Sylvain},
+           giveni={S\bibinitperiod}}}%
+        {{hash=89dbd30410c2085cd059f32c57d4593e}{%
+           family={Silver},
+           familyi={S\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{25cffe52eb83eac7ceb20a27df75976c}
+      \strng{fullhash}{25cffe52eb83eac7ceb20a27df75976c}
+      \strng{bibnamehash}{25cffe52eb83eac7ceb20a27df75976c}
+      \strng{authorbibnamehash}{25cffe52eb83eac7ceb20a27df75976c}
+      \strng{authornamehash}{25cffe52eb83eac7ceb20a27df75976c}
+      \strng{authorfullhash}{25cffe52eb83eac7ceb20a27df75976c}
+      \field{labelalpha}{GS11}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{A new paradigm for search, based on Monte-Carlo simulation, has revolutionised the performance of computer Go programs. In this article we describe two extensions to the Monte-Carlo tree search algorithm, which significantly improve the effectiveness of the basic algorithm. When we applied these two extensions to the Go program MoGo, it became the first program to achieve dan (master) level in 9×9 Go. In this article we survey the Monte-Carlo revolution in computer Go, outline the key ideas that led to the success of MoGo and subsequent Go programs, and provide for the first time a comprehensive description, in theory and in practice, of this extended framework for Monte-Carlo tree search.}
+      \field{issn}{0004-3702}
+      \field{journaltitle}{Artificial Intelligence}
+      \field{number}{11}
+      \field{title}{Monte-Carlo tree search and rapid action value estimation in computer Go}
+      \field{volume}{175}
+      \field{year}{2011}
+      \field{pages}{1856\bibrangedash 1875}
+      \range{pages}{20}
+      \verb{doi}
+      \verb https://doi.org/10.1016/j.artint.2011.03.007
+      \endverb
+      \verb{urlraw}
+      \verb https://www.sciencedirect.com/science/article/pii/S000437021100052X
+      \endverb
+      \verb{url}
+      \verb https://www.sciencedirect.com/science/article/pii/S000437021100052X
+      \endverb
+      \keyw{Computer Go,Monte-Carlo,Search,Reinforcement learning}
+    \endentry
+    \entry{vonNeumann1944}{book}{}
+      \name{author}{2}{}{%
+        {{hash=f8744afb2b8eb53c5804cbac615dbad1}{%
+           family={Neumann},
+           familyi={N\bibinitperiod},
+           given={John},
+           giveni={J\bibinitperiod},
+           prefix={von},
+           prefixi={v\bibinitperiod}}}%
+        {{hash=9a5e5068a8192ce97865c96f1dc9be3b}{%
+           family={Morgenstern},
+           familyi={M\bibinitperiod},
+           given={Oskar},
+           giveni={O\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Princeton, NJ}%
+      }
+      \list{publisher}{1}{%
+        {Princeton University Press}%
+      }
+      \strng{namehash}{60b9741f66d2319fdadf5a8582536594}
+      \strng{fullhash}{60b9741f66d2319fdadf5a8582536594}
+      \strng{bibnamehash}{60b9741f66d2319fdadf5a8582536594}
+      \strng{authorbibnamehash}{60b9741f66d2319fdadf5a8582536594}
+      \strng{authornamehash}{60b9741f66d2319fdadf5a8582536594}
+      \strng{authorfullhash}{60b9741f66d2319fdadf5a8582536594}
+      \field{labelalpha}{NM44}
+      \field{sortinit}{N}
+      \field{sortinithash}{22369a73d5f88983a108b63f07f37084}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Theory of Games and Economic Behavior}
+      \field{year}{1944}
+    \endentry
+    \entry{RIVEST198777}{article}{}
+      \name{author}{1}{}{%
+        {{hash=3a964821f97ee17f8bb285bc61c52899}{%
+           family={Rivest},
+           familyi={R\bibinitperiod},
+           given={Ronald\bibnamedelima L.},
+           giveni={R\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
+      }
+      \strng{namehash}{3a964821f97ee17f8bb285bc61c52899}
+      \strng{fullhash}{3a964821f97ee17f8bb285bc61c52899}
+      \strng{bibnamehash}{3a964821f97ee17f8bb285bc61c52899}
+      \strng{authorbibnamehash}{3a964821f97ee17f8bb285bc61c52899}
+      \strng{authornamehash}{3a964821f97ee17f8bb285bc61c52899}
+      \strng{authorfullhash}{3a964821f97ee17f8bb285bc61c52899}
+      \field{labelalpha}{Riv87}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We present an iterative method for searching min/max game trees based on the idea of approximating the “min” and “max” operators by generalized mean-valued operators. This approximation is used to guide the selection of the next leaf node to expand, since the approximations allow one to select efficiently that leaf node upon whose value the (approximate) value at the root most highly depends. Experimental results from almost 1,000 games of Connect-Four11Connect-Four is a trademark of the Milton-Bradley company. suggest that our scheme is superior to minimax search with alpha-beta pruning, for the same number of calls to the move routine. However, our scheme has higher overhead, so that further work is needed before it becomes competitive when CPU time per turn is the limiting resource.}
+      \field{issn}{0004-3702}
+      \field{journaltitle}{Artificial Intelligence}
+      \field{number}{1}
+      \field{title}{Game tree searching by min/max approximation}
+      \field{volume}{34}
+      \field{year}{1987}
+      \field{pages}{77\bibrangedash 96}
+      \range{pages}{20}
+      \verb{doi}
+      \verb https://doi.org/10.1016/0004-3702(87)90004-X
+      \endverb
+      \verb{urlraw}
+      \verb https://www.sciencedirect.com/science/article/pii/000437028790004X
+      \endverb
+      \verb{url}
+      \verb https://www.sciencedirect.com/science/article/pii/000437028790004X
+      \endverb
+    \endentry
+    \entry{UCBContest2015}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=692b34ce7da8ced52da8d10b25f9ad2f}{%
+           family={{UC Berkeley}},
+           familyi={U\bibinitperiod}}}%
+      }
+      \strng{namehash}{692b34ce7da8ced52da8d10b25f9ad2f}
+      \strng{fullhash}{692b34ce7da8ced52da8d10b25f9ad2f}
+      \strng{bibnamehash}{692b34ce7da8ced52da8d10b25f9ad2f}
+      \strng{authorbibnamehash}{692b34ce7da8ced52da8d10b25f9ad2f}
+      \strng{authornamehash}{692b34ce7da8ced52da8d10b25f9ad2f}
+      \strng{authorfullhash}{692b34ce7da8ced52da8d10b25f9ad2f}
+      \field{labelalpha}{UC 15}
+      \field{sortinit}{U}
+      \field{sortinithash}{6901a00e45705986ee5e7ca9fd39adca}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{http://ai.berkeley.edu/contest.html}}
+      \field{title}{{Contest: Pacman Capture the Flag}}
+      \field{year}{2015}
+    \endentry
+  \enddatalist
+\endrefsection
 \endinput
 
