@@ -21,6 +21,7 @@
 \usepackage{xcolor}
 \usepackage{arydshln}
 \usepackage{tikz}
+
 \usetikzlibrary{shapes.geometric, arrows}
 
 
@@ -103,6 +104,7 @@ This report presents a study on the development of AI agents for controlling a t
 %% REMEMBER TO WRITE IN A TOP-DOWN FASHION, STARTING EACH SECTION WITH A SUMMARY. 
 
 \section{Introduction}
+\label{sec:introduction}
 % Describe the problem and importance in detail
 
 With the continious development of society and technology, the need for autonomous agents is increasing. It is becoming more and more important to develop agents that can operate in dynamic and complex environments autonomously.
@@ -130,6 +132,8 @@ As seen in the figure above there are both Pacman and ghosts. The agent is a gho
 An agent can go into enemy territory and collect pellets, but the score will only increase when the agent returns back to its own side. In the figure there are also white pellets, 
 those are power pellets, when an agent collects a power pellet it can eat the enemy agents for a period of 40 moves. During that period the enemy ghost agents are regarded as scared.
 When an agent is eaten it respawns at its own side, if the agent was scared before getting eaten it will no longer be scared after respawning.
+The game ends when all but two food pellets have been eaten, or when the time limit of 1200 moves has been reached. The team with the highest score wins the game.
+There is a limit on calculation time, 15 seconds for initialization and 1 second for each move. If the agent exceeds the time limit three times duting a game the team will forfeit the game.
 
 The information each agent has access to is the following:
 \begin{itemize}
@@ -147,7 +151,9 @@ The information each agent has access to is the following:
 
 \subsection{Task Description}
 
-This report will discuss the problem of developing an agent that can play the game of Pacman capture the flag. The aim is to develop two agents which are able to defend their side of the map and also collect food pellets from the enemy side. The agents will be able to move in four directions, up, down, left and right. The agents 
+This report will discuss the problem of developing an agent that can play the game of Pacman capture the flag. 
+The aim is to develop two agents which are able to defend their side of the map and also collect food pellets from the enemy side. 
+The agents will be able to move in four directions, up, down, left and right. 
 
 
 
@@ -268,14 +274,77 @@ First, we will describe the experimental setup for the two problems, and then we
 \subsection{Experimental Setup}
 \label{subsec:experimental_setup}
 % Containing the results of other groups in a table, 
-The experimental environment was largely dependent on the problems. Both problems shared a a similar map and obstacle structure, the main difference being the agent objectives, environment sizes, and the fact that we didn't have any obstacles in the soccer environment (except, of course, for the boundaries of the field). For each of the problems, we were to compute and pass a set of inputs to the agents (different based on whether the agent was a car or a drone). The agents moved based on the provided input, and the updated positions and velocities were used in the next timestep to compute the next set of inputs. The agents were also provided with a set of parameters that decided how the different forces were weighted. The parameters were tuned by hand separately for each type of agent, and were not changed during the course of the simulation.
 
-All the solutions for Collision Avoidance were repeatedly tested in the Unity game environment on three terrains: an open field, an intersection, and a random map. The open field was a simple map with no obstacles. The intersection was a map with a crossroad and a few obstacles. The random map was a map with randomly generated obstacles. There were two possible initializations for the positions of the agents: first, in a circular formation, and second, in a random formation. The solutions were tested in the Unity game environment with $50$ agents. Based on performance, the solutions were improved and adjusted in an iterative manner.
+\subsubsection{Experimental setup for measurement of performance}
+In order to evaluate the performance of the suggested solution, we will compare our approach with five other groups. 
+This is done by putting the algorithms against each other in the simulation. 
+Two different evaluations will be done, one called pre-finals, in which the groups give their initial solutions, and one called finals, in which after having time to re-evaluate their solutions, the groups give their final solutions.
+The results of both evaluations are presented in the tables below.
+Results are measured in terms of wins, ties, losses. The score is calculated as the following: 3 points for a win, 1 point for a tie, and 0 points for a loss. The total score is the sum of the points for each group.
+
+
 
 
 \subsection{Results}
 \label{subsec:results}
-In this section, we summarize the results of our experiments. We first present the results of the Collision Avoidance problem, and then present the results of the Soccer problem. We then go on to discuss the merits and shortcomings of the best solutions from all the groups.
+In this section, we summarize the results of our experiments. First we present the results of the two evaluations in the competition, then we present the approach of the winning group.
+
+% table with 5 collumns and 4 rows for the following results:
+% 1. Group no. , 2. wins, 3. ties 4. losses 5. total score
+% G4, 0, 0, 0, 0
+% G2 , 0, 0, 0, 0
+% G6 , 0, 0, 0, 0
+% G3 , 0, 0, 0, 0
+% highlighting G3 
+
+\begin{table}[!hptb]
+  \centering
+  \begin{tabular}{|c|c|c|c|c|}
+    \hline
+    \textbf{Group} & \textbf{Wins} & \textbf{Ties} & \textbf{Losses} & \textbf{Total Score} \\
+    \hline
+    4 & 8 & 0 & 0 & 24 \\
+    \hline
+    2 & 5 & 1 & 0 & 16 \\
+    \hline
+    6 & 5 & 1 & 3 & 16 \\
+    \hline
+    3 & 3 & 5 & 2 & 14 \\
+    \hline
+  \end{tabular}
+  \caption{Results of the pre-finals evaluation.}
+  \label{tab:results_prefinals}
+\end{table}
+
+
+% finals results:
+% G4: 13 wins, 1 tie, 1 loss, 40 points
+% G2: 9 wins, 2 ties, 4 losses, 29 points
+% G6: 7 wins, 2 ties, 6 losses, 23 points
+% G3: 5 wins, 4 ties, 6 losses, 19 points
+\begin{table}[!hptb]
+  \centering
+  \begin{tabular}{|c|c|c|c|c|}
+    \hline
+    \textbf{Group} & \textbf{Wins} & \textbf{Ties} & \textbf{Losses} & \textbf{Total Score} \\
+    \hline
+    4 & 13 & 1 & 1 & 40 \\
+    \hline
+    2 & 9 & 2 & 4 & 29 \\
+    \hline
+    6 & 7 & 2 & 6 & 23 \\
+    \hline
+    3 & 4 & 4 & 6 & 16 \\
+    \hline
+  \end{tabular}
+  \caption{Results of the finals evaluation.}
+  \label{tab:results_finals}
+\end{table}
+
+
+
+
+
 
 
 
