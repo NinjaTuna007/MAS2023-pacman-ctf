@@ -273,7 +273,9 @@ We noticed that the offensive agents sometimes got stuck in local extrema of the
 \subsection{Defensive Heuristics}
 \label{subsec:defensive_heuristics}
 
+For the ``defense'' mode of the agent, we incentivize minimizing the sum of distances to all the food we are defending. Since food near the center line is easier to take by the enemy, we give more weight to being close to those food particles. We keep track of the food that is being defended by our agent, and if some of it disappears, we know that an enemy agent has eaten it. We try to chase the enemy agent based on direct sight, knowledge from our teammate, and disappearing food. If we are close enough to the enemy agent, we move to trap and eat it we are not scared. If we are scared, we try to run away from the enemy agent. In no circumstance does the agent go over to enemy territory when in defense mode.
 
+The exact details of our implementation can be found in our Github Repository and submitted final code.
 
 \section{Experiments and Results}
 \label{sec:experiments_and_results}
@@ -283,17 +285,13 @@ First, we will describe the experimental setup for the two problems, and then we
 
 \subsection{Experimental Setup}
 \label{subsec:experimental_setup}
-% Containing the results of other groups in a table, 
-The experimental environment was largely dependent on the problems. Both problems shared a a similar map and obstacle structure, the main difference being the agent objectives, environment sizes, and the fact that we didn't have any obstacles in the soccer environment (except, of course, for the boundaries of the field). For each of the problems, we were to compute and pass a set of inputs to the agents (different based on whether the agent was a car or a drone). The agents moved based on the provided input, and the updated positions and velocities were used in the next timestep to compute the next set of inputs. The agents were also provided with a set of parameters that decided how the different forces were weighted. The parameters were tuned by hand separately for each type of agent, and were not changed during the course of the simulation.
 
-All the solutions for Collision Avoidance were repeatedly tested in the Unity game environment on three terrains: an open field, an intersection, and a random map. The open field was a simple map with no obstacles. The intersection was a map with a crossroad and a few obstacles. The random map was a map with randomly generated obstacles. There were two possible initializations for the positions of the agents: first, in a circular formation, and second, in a random formation. The solutions were tested in the Unity game environment with $50$ agents. Based on performance, the solutions were improved and adjusted in an iterative manner.
+% Containing the results of other groups in a table, 
 
 
 \subsection{Results}
 \label{subsec:results}
 In this section, we summarize the results of our experiments. We first present the results of the Collision Avoidance problem, and then present the results of the Soccer problem. We then go on to discuss the merits and shortcomings of the best solutions from all the groups.
-
-
 
 
 
