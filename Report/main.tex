@@ -244,23 +244,43 @@ MCTS is a sampling-based search algorithm that has demonstrated remarkable succe
 
 \subsection{Decision Tree Based Approaches}
 \label{subsec:decision_tree}
-Decision trees offer a structured representation of decision-making processes. By learning from historical data and constructing decision rules, decision-tree-based approaches provide an interpretable framework for agent behavior. These techniques have been explored in Pac-Man CTF, where agents use decision trees to guide their actions based on various game state features [7][8].
-
-\subsection{Hybrid Approaches}
-\label{subsec:hybrid}
-Several studies have proposed hybrid strategies by combining different AI techniques in Pac-Man CTF. For example, integrating MCTS with minimax or Expectimax algorithms has shown promise in improving agent performance [9][10]. Such hybrid approaches leverage the strengths of different methods to create robust and adaptable AI agents.
-
+Decision trees offer a structured representation of decision-making processes. By learning from historical data and constructing decision rules, decision-tree-based approaches provide an interpretable framework for agent behavior. These techniques have been explored in Pac-Man CTF, where agents use decision trees to guide their actions based on various game state features \cite{Hastie2009}.
 
 
 \section{Method}
 \label{method}
 % Proposed method section explaining what you did in more detail
 
-In this section, we will discuss ...
+In this section, we will discuss the solution proposed by our team. The solution is based on the Minimax algorithm, with some modifications to account for the limitations of the UC Berkeley Pacman Capture the Flag project. We will also discuss the motivations behind our heuristic functions.
 
+\subsection{Modified Minimax}
+\label{subsec:modified_minimax}
 
+Typical Minimax approaches require that the entire game state be observable to us. Firstly, the UC Berkeley challenge does not provide us with the entire game state - we can only see the positions of our team members, and nearby enemies. Secondly, even if we knew the positions of all the enemies, if we consider the movements of both agents of our team as a single action, then the branching factor of the game tree is too large to be explored in a reasonable amount of time. So, we decided to modify the typical Minimax approach as follows:
 
+\begin{itemize}
+  \item At each time step, we consider the possible actions of the agent we are controlling (as the maximizing player). If there is an enemy agent visible to us, we consider the possible actions of the enemy agent as well, by passing control to the enemy as a minimizing player. If not, we continue to consider the possible actions of our agent (by exploring further based on moves that we can make in the next time step as the maximizing player).
+  \item We use a heuristic to evaluate the utility of a game state, instead of evaluating the utility of a terminal state. We compute heuristics until a certain depth of the game tree, and use iteratively deepening search to explore the game tree further if time permits.
+  \item We use alpha-beta pruning to reduce the number of nodes that we need to explore in the minimax exploration of the game tree. To further speed up the search, we use move ordering based on heuristics to explore the most promising nodes first, and implement repeated states checking to avoid computing values of the same game state multiple times when working with deeper game trees.
+\end{itemize}
 
+\subsection{Heuristics}
+\label{subsec:heuristics}
+
+We started off by having separate classes for offensive and defensive agents, each with a different heuristic. Later, we merged the two classes into a single class, and used a attribute called \texttt{mode} to determine if the behavior should be defensive or offensive, based on current agent position, position of our teammate, positions of any visible enemies, etc.
+
+\subsection{Offensive Heuristics}
+\label{subsec:offensive_heuristics}
+When in ``offensive'' mode, our agent tries to cross over to the other side of the map as quickly as possible, then actively looks for food pellets to capture. We prioritize closer food (without disregarding the rest), de-value food inside dead-end paths (paths that can be choked off at a single point by the enemy) pick up power pills when possible and when enemy agents are closeby. As the food in our pocket increases, we have an increasing tendency to return to our side of the map to deposit the food. We also try to avoid enemy agents when possible, and try to eat them when they are scared. Being chased by an unscared enemy also ``turns off'' the tendency to chase food, and we try to run away from the enemy instead. We also try to avoid getting trapped in dead-end paths, and try to avoid getting cornered by enemy agents. After depositing the food, we start this process again.
+
+We noticed that the offensive agents sometimes got stuck in local extrema of the value function. For example, sometimes the agent sat next to a food particle and didn't eat it, until the enemy agent came closer and pushed it into scramble mode. To avoid this, we added an increasing tendency to return to our own side for each time step in which the chosen action was to stay in the same place. This helped the agent get out of local extrema in a couple of moves, in most cases.
+
+\subsection{Defensive Heuristics}
+\label{subsec:defensive_heuristics}
+
+For the ``defense'' mode of the agent, we incentivize minimizing the sum of distances to all the food we are defending. Since food near the center line is easier to take by the enemy, we give more weight to being close to those food particles. We keep track of the food that is being defended by our agent, and if some of it disappears, we know that an enemy agent has eaten it. We try to chase the enemy agent based on direct sight, knowledge from our teammate, and disappearing food. If we are close enough to the enemy agent, we move to trap and eat it we are not scared. If we are scared, we try to run away from the enemy agent. In no circumstance does the agent go over to enemy territory when in defense mode.
+
+The exact details of our implementation can be found in our Github Repository and submitted final code.
 
 \section{Experiments and Results}
 \label{sec:experiments_and_results}
@@ -270,6 +290,7 @@ First, we will describe the experimental setup for the two problems, and then we
 
 \subsection{Experimental Setup}
 \label{subsec:experimental_setup}
+
 % Containing the results of other groups in a table, 
 
 \subsubsection{Experimental setup for measurement of performance}
@@ -337,8 +358,6 @@ In this section, we summarize the results of our experiments. First we present t
   \caption{Results of the finals evaluation.}
   \label{tab:results_finals}
 \end{table}
-
-
 
 
 

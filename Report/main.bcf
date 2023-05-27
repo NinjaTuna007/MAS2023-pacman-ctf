@@ -2350,11 +2350,13 @@
     <bcf:citekey order="3">CAMPBELL200257</bcf:citekey>
     <bcf:citekey order="4">RIVEST198777</bcf:citekey>
     <bcf:citekey order="5">GELLY20111856</bcf:citekey>
-    <bcf:citekey order="6">UCBContest2015</bcf:citekey>
-    <bcf:citekey order="7">vonNeumann1944</bcf:citekey>
-    <bcf:citekey order="8">CAMPBELL200257</bcf:citekey>
-    <bcf:citekey order="9">RIVEST198777</bcf:citekey>
-    <bcf:citekey order="10">GELLY20111856</bcf:citekey>
+    <bcf:citekey order="6">Hastie2009</bcf:citekey>
+    <bcf:citekey order="7">UCBContest2015</bcf:citekey>
+    <bcf:citekey order="8">vonNeumann1944</bcf:citekey>
+    <bcf:citekey order="9">CAMPBELL200257</bcf:citekey>
+    <bcf:citekey order="10">RIVEST198777</bcf:citekey>
+    <bcf:citekey order="11">GELLY20111856</bcf:citekey>
+    <bcf:citekey order="12">Hastie2009</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="anyt">
