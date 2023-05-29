@@ -365,56 +365,61 @@ In this section, we summarize the results of our experiments. First we present t
 
 
 
-As agreed upon between the groups, we ran the final games on maps  of size 32x32, with 2 agents on each team, with varying seeds determining the map layout. We ran one game against each group for each seed, and recorded the results in Table \ref{tab:results_final}. In contrast, the pre-final tournament was run on maps of size 16x16. The results of the pre-final tournament are shown in Table \ref{tab:results_pre_final}. In both cases, to compute the final scores, we gave 3 points for a win, 1 point for a tie, and 0 points for a loss.
+As agreed upon between the groups, we ran the final games on maps  of size 32x32, with 2 agents on each team, with varying seeds determining the map layout. We ran one game against each group for each seed, and recorded the results in Table \ref{tab:results_finals}. In contrast, the pre-final tournament was run on maps of size 16x16. The results of the pre-final tournament are shown in Table \ref{tab:results_prefinals}. In both cases, to compute the final scores, we gave 3 points for a win, 1 point for a tie, and 0 points for a loss.
 
 
 % table of pre-final results
 
-\begin{table}[!hptb]
-  \centering
-  \begin{tabular}{|c|c|c|c|c|c|c|}
-    \hline
-    \textbf{Seed} & \textbf{Group 1} & \textbf{Group 2} & \textbf{Group 3} & \textbf{Group 4} & \textbf{Group 5} & \textbf{Group 6} \\
-    \hline
-    53 & tie, tie & tie, lose & NA & win, lose & win, tie & lose, lose \\
-    \hline
-    63 & tie, tie & tie, tie & NA & win, lose & tie, tie & lose, lose \\
-    \hline
-    \textbf{Final Score} & 3 & 16 & 14 & 24 & 12 & 16 \\
-    \hline
+% \begin{table}[!hptb]
+%   \centering
+%   \begin{tabular}{|c|c|c|c|c|c|c|}
+%     \hline
+%     \textbf{Seed} & \textbf{Group 1} & \textbf{Group 2} & \textbf{Group 3} & \textbf{Group 4} & \textbf{Group 5} & \textbf{Group 6} \\
+%     \hline
+%     53 & tie, tie & tie, lose & NA & win, lose & win, tie & lose, lose \\
+%     \hline
+%     63 & tie, tie & tie, tie & NA & win, lose & tie, tie & lose, lose \\
+%     \hline
+%     % \textbf{Final Score} & 3 & 16 & 14 & 24 & 12 & 16 \\
+%     \hline
 
-  \end{tabular}
-  \caption{Performance of our agents against other groups in the pre-final tournament}
-  \label{tab:results_pre_final}
-\end{table}
+%   \end{tabular}
+%   \caption{Performance of our agents against other groups in the pre-final tournament}
+%   \label{tab:results_pre_final}
+% \end{table}
 
 % table of final results
 
-\begin{table}[!hptb]
-  \centering
-  \begin{tabular}{|c|c|c|c|c|c|c|}
-    \hline
-    \textbf{Seed} & \textbf{Group 1} & \textbf{Group 2} & \textbf{Group 3} & \textbf{Group 4} & \textbf{Group 5} & \textbf{Group 6} \\
-    \hline
-    31 & 0 & 0 & 0 & 0 & 0 & 0 \\
-    \hline
-    489 & 0 & 0 & 0 & 0 & 0 & 0 \\
-    \hline
-    89 & 0 & 0 & 0 & 0 & 0 & 0 \\
-    \hline
-    \textbf{Final Score} & 2 & 29 & 16 & 40 & 17 & 23 \\
-    \hline
+% \begin{table}[!hptb]
+%   \centering
+%   \begin{tabular}{|c|c|c|c|c|c|c|}
+%     \hline
+%     \textbf{Seed} & \textbf{Group 1} & \textbf{Group 2} & \textbf{Group 3} & \textbf{Group 4} & \textbf{Group 5} & \textbf{Group 6} \\
+%     \hline
+%     31 & 0 & 0 & 0 & 0 & 0 & 0 \\
+%     \hline
+%     489 & 0 & 0 & 0 & 0 & 0 & 0 \\
+%     \hline
+%     89 & 0 & 0 & 0 & 0 & 0 & 0 \\
+%     \hline
+%     % \textbf{Final Score} & 2 & 29 & 16 & 40 & 17 & 23 \\
+%     \hline
 
-  \end{tabular}
-  \caption{Performance of our agents against other groups in the final tournament}
-  \label{tab:results_final}
-\end{table}
+%   \end{tabular}
+%   \caption{Performance of our agents against other groups in the final tournament}
+%   \label{tab:results_final}
+% \end{table}
 
 During the pre-final, our agents were reasonably good, but we still had some bugs that caused them to perform poorly in some situations. For example, sometimes our offensive agent thought it was better to sit next to a food pellet than to eat it. Sometimes, our defensive agent kept the enemy in sight without moving in for an obvious kill. At this point, our agents still had fixed roles (one attack and one defense), and did not switch roles based on the state of the game.
 
 Between the pre-final and final tournaments, we fixed the bugs in our agents, and also implemented the role switching mechanism described in Section \ref{subsec:heuristics}. This allowed our agents to switch roles based on the state of the game, and also to switch roles if one of the agents was killed. This improved the performance of our agents significantly in our testing. However, we overlooked something quite important - the size of the map on which we tested our ``Fluid'' Agents was much smaller than the size of the map on which the final tournament was run. This meant that our agents were not able to switch roles as seamlessly, often leaving gaps in our defense. This was compounded by the fact that our agents were not able to see the entire map, and hence could not plan their actions accordingly. This led to our agents performing poorly in the final tournament. We believe that if we had tested our agents on larger maps and spend some more time tuning the parameters, we would have been able to perform much better in the final tournament.
 
-The overall winner of the tournament was Group 4, who had the best performing agents in both the pre-final and final tournaments.
+
+From Tables \ref{tab:results_prefinals} and \ref{tab:results_finals}, it is clear that the overall winner of the tournament was Group 4, who had the highest scores on both the pre-final and final tournaments. There was an issue where they took about 4 minutes to initialize their agents instead of the agreed 15 seconds, and could thus be disqualified, but we agreed to let them participate in the tournament anyway. Their approach relies heavily on a Monte-Carlo Tree Search, coupled with a heuristic function to evaluate the value of a game state instead of using rollouts to the end of the game. They also had a very good estimator that allowed them to ``guess'' where the enemy agents could be, and act accordingly. This allowed them to perform very well in the tournament.
+
+Group 2 came in second place, with both the offensive and defensive behaviors being based on a simple Decision Tree based approach. They had one defensive agent and one offensive agent, with no role switching mechanism. They also estimated the current position of the enemy agents, based on an HMM model. This gave them good intelligence on the enemy agents, and allowed them to perform well in the tournament.
+
+Group 6 also had an interesting approach - their defensive behavior was based on a simple Decision Tree based approach, while the offensive behavior used a minimax implementation quite like our own. They had a much better role-switching mechanism than ours: when they had a lead of more than 10 points, both their agents would switch to defense. If their defense was scared, they would switch to offense and focus on eating food pellets, since they could anyways not defend their own food pellets at that point. Similarly, if both enemy agents were scared, both their agents would switch to offense and try to eat the enemy food pellets. This allowed them to perform quite well in the tournament, and secured them the third place.
 
 
 % Containing the results of other groups in a table, 
