@@ -363,18 +363,6 @@ In this section, we summarize the results of our experiments. First we present t
 
 
 
-\subsection{Improvements}
-\label{subsec:improvements}
-In this section we will discuss the improvements that can be made to the suggested solution. 
-
-During the development of the solution, we noticed that the agents sometimes got stuck in local extrema of the value function. 
-For example, sometimes the agent sat next to a food particle and didn't eat it, until the enemy agent came closer and pushed it into scramble mode. 
-To avoid this, we added an increasing tendency to return to our own side for each time step in which the chosen action was to stay in the same place. 
-This helped the agent get out of local extrema in a couple of moves, in most cases. 
-However this is not a perfect solution, as we risk getting stuck in a position within a chokehold in the enemy territory. This roots to the heuristic design we have chosen and in order to improve upon this a in depth analysis of the different heuristics is required. \\
-
-In the finals we observed a peculiar behavior of the offensive agent, as the enemy ghost 
-
 
 
 As agreed upon between the groups, we ran the final games on maps  of size 32x32, with 2 agents on each team, with varying seeds determining the map layout. We ran one game against each group for each seed, and recorded the results in Table \ref{tab:results_final}. In contrast, the pre-final tournament was run on maps of size 16x16. The results of the pre-final tournament are shown in Table \ref{tab:results_pre_final}. In both cases, to compute the final scores, we gave 3 points for a win, 1 point for a tie, and 0 points for a loss.
@@ -432,6 +420,19 @@ The overall winner of the tournament was Group 4, who had the best performing ag
 % Containing the results of other groups in a table, 
 
 
+
+
+\subsection{Improvements}
+\label{subsec:improvements}
+In this section we will discuss the improvements that can be made to the suggested solution. 
+
+During the development of the solution, we noticed that the agents sometimes got stuck in local extrema of the value function. 
+For example, sometimes the agent sat next to a food particle and didn't eat it, until the enemy agent came closer and pushed it into scramble mode. 
+To avoid this, we added an increasing tendency to return to our own side for each time step in which the chosen action was to stay in the same place. 
+This helped the agent get out of local extrema in a couple of moves, in most cases. 
+However this is not a perfect solution, as we risk getting stuck in a position within a chokehold in the enemy territory. This roots to the heuristic design we have chosen and in order to improve upon this a in depth analysis of the different heuristics is required. \\
+
+In the finals we observed a peculiar behavior of the offensive agent, as the enemy ghost 
 
 
 
