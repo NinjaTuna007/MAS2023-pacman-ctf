@@ -285,13 +285,14 @@ The exact details of our implementation can be found in our Github Repository an
 \section{Experiments and Results}
 \label{sec:experiments_and_results}
 
-% mention failure to clear intersection with cars
-First, we will describe the experimental setup for the two problems, and then we will present the results for each of the problems separately.
+First, we will describe the experimental setup for the Pacman CTF game, and then we will present the results of our experiments. We will also discuss the merits and shortcomings of our solution, and compare it with the solutions of other groups.
 
 \subsection{Experimental Setup}
 \label{subsec:experimental_setup}
 
-% Containing the results of other groups in a table, 
+We ran our experiments on the UC Berkeley Pacman Capture the Flag project. We used the provided baseline agents as a starting point, and modified them to implement our solution. We used the provided \texttt{capture.py} script to run the experiments, modifying only the \texttt{myTeam} file to use our agents. We used the provided \texttt{capture\_agent.py} file as a starting point for our agents, and modified it to implement our solution as described in Section \ref{method}.
+
+All teams agreed on specific map sizes, seeds, and number of agents per team for the pre-final and final tournaments. We also agreed on a maximum compute time for each move, to ensure that the games would finish in a reasonable amount of time. One of the drawbacks of this approach is that different machines may be able to process different amounts of the game tree in the given time, and hence the results may not be completely fair. However, we believe that this is a reasonable trade-off, since it is not possible to ensure that all machines are equally powerful. We did not explicitly penalize teams for exceeding the time limit, relying on the honor system instead. There was a similar limit on the amount of time that a team could take upon initialization, to ensure that the games would start in a reasonable amount of time. We ran into situations where some teams still took a much longer time to initialize, leading to delays in the start of the game. We have not explicitly penalized teams for this, but we believe that this is something that should be taken into account in future tournaments.
 
 \subsubsection{Experimental setup for measurement of performance}
 In order to evaluate the performance of the suggested solution, we will compare our approach with five other groups. 
@@ -376,6 +377,59 @@ In the finals we observed a peculiar behavior of the offensive agent, as the ene
 
 
 
+As agreed upon between the groups, we ran the final games on maps  of size 32x32, with 2 agents on each team, with varying seeds determining the map layout. We ran one game against each group for each seed, and recorded the results in Table \ref{tab:results_final}. In contrast, the pre-final tournament was run on maps of size 16x16. The results of the pre-final tournament are shown in Table \ref{tab:results_pre_final}. In both cases, to compute the final scores, we gave 3 points for a win, 1 point for a tie, and 0 points for a loss.
+
+% table of pre-final results
+
+\begin{table}[!hptb]
+  \centering
+  \begin{tabular}{|c|c|c|c|c|c|c|}
+    \hline
+    \textbf{Seed} & \textbf{Group 1} & \textbf{Group 2} & \textbf{Group 3} & \textbf{Group 4} & \textbf{Group 5} & \textbf{Group 6} \\
+    \hline
+    53 & tie, tie & tie, lose & NA & win, lose & win, tie & lose, lose \\
+    \hline
+    63 & tie, tie & tie, tie & NA & win, lose & tie, tie & lose, lose \\
+    \hline
+    \textbf{Final Score} & 3 & 16 & 14 & 24 & 12 & 16 \\
+    \hline
+
+  \end{tabular}
+  \caption{Performance of our agents against other groups in the pre-final tournament}
+  \label{tab:results_pre_final}
+\end{table}
+
+% table of final results
+
+\begin{table}[!hptb]
+  \centering
+  \begin{tabular}{|c|c|c|c|c|c|c|}
+    \hline
+    \textbf{Seed} & \textbf{Group 1} & \textbf{Group 2} & \textbf{Group 3} & \textbf{Group 4} & \textbf{Group 5} & \textbf{Group 6} \\
+    \hline
+    31 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    \hline
+    489 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    \hline
+    89 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    \hline
+    \textbf{Final Score} & 2 & 29 & 16 & 40 & 17 & 23 \\
+    \hline
+
+  \end{tabular}
+  \caption{Performance of our agents against other groups in the final tournament}
+  \label{tab:results_final}
+\end{table}
+
+During the pre-final, our agents were reasonably good, but we still had some bugs that caused them to perform poorly in some situations. For example, sometimes our offensive agent thought it was better to sit next to a food pellet than to eat it. Sometimes, our defensive agent kept the enemy in sight without moving in for an obvious kill. At this point, our agents still had fixed roles (one attack and one defense), and did not switch roles based on the state of the game.
+
+Between the pre-final and final tournaments, we fixed the bugs in our agents, and also implemented the role switching mechanism described in Section \ref{subsec:heuristics}. This allowed our agents to switch roles based on the state of the game, and also to switch roles if one of the agents was killed. This improved the performance of our agents significantly in our testing. However, we overlooked something quite important - the size of the map on which we tested our ``Fluid'' Agents was much smaller than the size of the map on which the final tournament was run. This meant that our agents were not able to switch roles as seamlessly, often leaving gaps in our defense. This was compounded by the fact that our agents were not able to see the entire map, and hence could not plan their actions accordingly. This led to our agents performing poorly in the final tournament. We believe that if we had tested our agents on larger maps and spend some more time tuning the parameters, we would have been able to perform much better in the final tournament.
+
+The overall winner of the tournament was Group 4, who had the best performing agents in both the pre-final and final tournaments.
+
+
+% Containing the results of other groups in a table, 
+
 
 
 
@@ -414,51 +468,6 @@ In the finals we observed a peculiar behavior of the offensive agent, as the ene
 
 
 % \paragraph{Relevance of the Problem}
-% Collision avoidance is a critical problem in multi-agent systems, where agents must work together to accomplish tasks in a shared environment, where the actions of one agent may affect the state of the environment and the other agents. In this context, collision avoidance is essential to ensure the safety of agents and the success of the mission. This has applications in various domains, including unmanned aerial vehicles, autonomous vehicles, and mobile robots. In these applications, agents must navigate through dynamic and crowded environments while avoiding obstacles and other agents. Thus, developing effective collision avoidance strategies is critical to the reliable and safe operation of multi-agent systems in real-world applications.
-
-
-
-
-% In \cite{6606326}, a novel behaviour tree based control used in decision making processes of robot soccer is proposed.
-% The most impressive point is passing.
-% The passing behavior tree first controls two robots using parallel sequences, with the passer and receiver aligned, 
-% and then the tree checks if the pass is safe. If the ball can be passed, the passer shoots the ball.
-% Next, the sequence waits for the ball to start moving, and once this happens, 
-% we again wait for the ball to stop, or for the ball to come within the diameter of the receiver's robot, 
-% at which point the receiver moves and captures the ball. The use of BT approach allows to model complicated 
-% situations easily that show advantages of this technique over finite state machines widely
-% used in robot control\cite{6606326}.
-
-
-% \begin{eqnarray}
-%   \label{eqn:car_input}
-%   \begin{aligned}
-%     % atan(dot product of a and r)
-%     \text{steering} &= \arctan(\overrightarrow{\mathbf{a}} \bullet \hat{\mathbf{r}}) \\
-%     % atan(dot product of a and f)
-%     \text{gas} &= \arctan(\overrightarrow{\mathbf{a}} \bullet \hat{\mathbf{f}}) \\
-%     % if magnitude of gas is too small, scale it to 0.2. add a comment about epsilon at the end of the line
-%     \text{gas} &= \text{gas} \cdot \frac{\epsilon}{\text{min}(|\text{gas}|, \epsilon)} \\
-%     % \text{brake} &= 0 \\
-%   \end{aligned}
-% \end{eqnarray}
-
-% % figure showing drag
-% \begin{figure}[!htbp]
-%   \centering
-%   \includegraphics[width=0.3\textwidth]{./figures/intelli_drag.png}
-%   \caption{Assistive drag force to help the agent maintain its reference trajectory.}
-%   \label{fig:drag_force}
-% \end{figure}
-
-% % figure showing velocity obstacle
-% \begin{figure}[!hptb]
-%   \centering
-%   \includegraphics[width=0.3\textwidth]{./figures/VO_repulsion_setup.png}
-%   \caption{Velocity Obstacle setup for two agents.}
-%   \label{fig:velocity_obstacle_setup}
-% \end{figure}
-
 
 % table layout
 % \begin{table}[!hptb]
