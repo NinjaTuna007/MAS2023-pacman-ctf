@@ -237,6 +237,7 @@ Sometimes, however, it is not feasible to search the entire game tree, due to th
 \label{subsec:expectimax}
 Expectimax is a variant of the minimax algorithm that considers uncertain outcomes in games. It is commonly used in domains with probabilistic elements. In Pac-Man CTF, Expectimax can be employed to account for the ghost movement and uncertain states, enabling agents to make rational decisions under uncertainty \cite{RIVEST198777}.
 
+
 \subsection{Monte Carlo Tree Search}
 \label{subsec:mcts}
 MCTS is a sampling-based search algorithm that has demonstrated remarkable success in various game-playing domains. By combining tree exploration with random rollouts, MCTS performs effective exploration and exploitation of the search space. This approach has been applied to Pac-Man CTF, where agents simulate multiple playouts to estimate the value of different actions and make informed decisions \cite{GELLY20111856}.
@@ -482,16 +483,13 @@ In this section we will discuss the improvements that can be made to the suggest
 Duting the solutions's development, we noticed that the offensive agents sometimes got stuck in local extrema of the value function. For example, sometimes the agent sat next to a food particle and didn't eat it, until the enemy agent came closer and pushed it into scramble mode. 
 To avoid this, we added an increasing tendency to return to our own side for each time step in which the chosen action was to stay in the same place. 
 This helped the agent get out of local extrema in a couple of moves, in most cases. 
-However this is not a perfect solution, as we risk getting stuck in a position within a chokehold in the enemy territory. This roots to the heuristic design we have chosen and in order to improve upon this a in depth analysis of the different heuristics is required. \\
+However this is not a perfect solution, as we risk getting stuck in a position within a chokehold in the enemy territory. This roots to the heuristic design we have chosen and in order to improve upon this a in depth analysis of the different heuristics is required.
 
-In the finals we observed a peculiar behavior of the offensive agent; the enemy ghost was chasing our agent, but at 5 distances away, our agent moved in a loop following the exact same route multiple times. 
-This suggests that the heuristics should include a time variant factor in order to avoid loops.
+In the finals we observed a peculiar behavior of the offensive agent; the enemy ghost was chasing our agent, but at 5 distances away, our agent moved in a loop following the exact same route multiple times. This suggests that the heuristics should include a time variant factor in order to avoid loops.
 
 In the development of the role switching mechanism, we implemented it analysing the original map sizes from the pre-finals. 
 As a result of this we observe that there were times when our field was unprotected and the enemy agents could easily pass through. 
-This is when an offensive agent is killed and the role switching mechanism is triggered. At that point, the defensive agent becomes the offensive agent and starts advancing into the enemy territory.
-As a result of this behavior, the now defensive agent is offset from its optimal guarding position, as the agent was just respawned, and the result is our territory being unguarded. 
-The improvement our group suggest for this is to not trigger the switch until the respawned agent has had the time to move towards the middle of our half plane.
+This is when an offensive agent is killed and the role switching mechanism is triggered. At that point, the defensive agent becomes the offensive agent and starts advancing into the enemy territory. As a result of this behavior, the now defensive agent is offset from its optimal guarding position, as the agent was just respawned, and the result is our territory being unguarded. The improvement our group suggest for this is to not trigger the switch until the respawned agent has had the time to move towards the middle of our half plane.
 
 
 
@@ -503,12 +501,12 @@ The improvement our group suggest for this is to not trigger the switch until th
 % \clearpage
 % \newpage
 \printbibliography
-\newpage
+% \newpage
 
-\appendix
-% print the appendix title on the top of the page
-\section{Appendix}
-\label{sec:appendix}
+% \appendix
+% % print the appendix title on the top of the page
+% \section{Appendix}
+% \label{sec:appendix}
 
 
 
