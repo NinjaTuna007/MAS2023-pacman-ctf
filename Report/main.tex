@@ -255,11 +255,11 @@ In this section, we will discuss the solution proposed by our team. The solution
 
 \subsection{Modified Minimax}
 \label{subsec:modified_minimax}
-
+% comment: reasonable seems is not good measurement? unnecessary word? 
 Typical Minimax approaches require that the entire game state be observable to us. Firstly, the UC Berkeley challenge does not provide us with the entire game state - we can only see the positions of our team members, and nearby enemies. Secondly, even if we knew the positions of all the enemies, if we consider the movements of both agents of our team as a single action, then the branching factor of the game tree is too large to be explored in a reasonable amount of time. So, we decided to modify the typical Minimax approach as follows:
 
 \begin{itemize}
-  \item At each time step, we consider the possible actions of the agent we are controlling (as the maximizing player). If there is an enemy agent visible to us, we consider the possible actions of the enemy agent as well, by passing control to the enemy as a minimizing player. If not, we continue to consider the possible actions of our agent (by exploring further based on moves that we can make in the next time step as the maximizing player).
+  \item At each time step, we consider the possible actions of the agent we are controlling (as the maximizing player). If there is an enemy agent visible to us, we consider the possible actions of the enemy agent as well, by passing control to the enemy as a minimizing player. If not, we continue to consider the possible actions of our agent (by exploring further based on moves that we can make in the next time step as the maximizing player). % comment: this does not need to be in (-)
   \item We use a heuristic to evaluate the utility of a game state, instead of evaluating the utility of a terminal state. We compute heuristics until a certain depth of the game tree, and use iteratively deepening search to explore the game tree further if time permits.
   \item We use alpha-beta pruning to reduce the number of nodes that we need to explore in the minimax exploration of the game tree. To further speed up the search, we use move ordering based on heuristics to explore the most promising nodes first, and implement repeated states checking to avoid computing values of the same game state multiple times when working with deeper game trees.
 \end{itemize}
@@ -362,7 +362,17 @@ In this section, we summarize the results of our experiments. First we present t
 
 
 
+\subsection{Improvements}
+\label{subsec:improvements}
+In this section we will discuss the improvements that can be made to the suggested solution. 
 
+During the development of the solution, we noticed that the agents sometimes got stuck in local extrema of the value function. 
+For example, sometimes the agent sat next to a food particle and didn't eat it, until the enemy agent came closer and pushed it into scramble mode. 
+To avoid this, we added an increasing tendency to return to our own side for each time step in which the chosen action was to stay in the same place. 
+This helped the agent get out of local extrema in a couple of moves, in most cases. 
+However this is not a perfect solution, as we risk getting stuck in a position within a chokehold in the enemy territory. This roots to the heuristic design we have chosen and in order to improve upon this a in depth analysis of the different heuristics is required. \\
+
+In the finals we observed a peculiar behavior of the offensive agent, as the enemy ghost 
 
 
 
