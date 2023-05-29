@@ -442,6 +442,35 @@ Group 6 also had an interesting approach - their defensive behavior was based on
 \section{Summary and Conclusions}
 \label{sec:conclusion}
 
+The purpose of this project was to develop an agent capable of playing the game of Pacman capture the flag, utilizing various artificial intelligence techniques. 
+We explored various methods, including minimax game tree search, Monte Carlo Tree Search (MCTS), Expectimax, and decision-tree-based approaches. 
+The final solution included a modified Minimax, alpha-beta pruning. This, in combination with the heuristics, allowed our agents to perform reasonably well.
+The modified Minimax was implemented by considering the possible actions of the agent we are controlling (as the maximizing player), and when our agent saw an enemy agent, we considered the possible actions of the enemy agent as well (as the minimizing player).
+Further, we also implementedrole switching between the agents, which allowed them to switch roles based on the state of the game, and also to switch roles if one of the agents was killed.
+
+During the pre-final stage, the agents showed good performance, but we still had some bugs that caused them to perform poorly in some situations. 
+A bug that affected our performance greatly was that sometimes our offensive agent thought it was better to sit next to a food pellet than to eat it.
+This was dealt with by changing the heuristics and adidng a penalty for staying in the same place.
+
+Between the pre-final and final tournaments, we fixed the bugs in our agents, and also implemented the role switching mechanism described in Section \ref{subsec:heuristics}.
+The role switching mechanism performed well in the pre-final stage maps, however, in the finals the map size was increased and the agents were not able to switch roles as seamlessly, often leaving gaps in our defense.
+
+Despite improvements made to the agents, the agents' performance suffered in the final tournament due to these challenges. It is believed that testings on larger maps and more time spent tuning the parameters would have improved the performance of the agents.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 \section{Future Work}
