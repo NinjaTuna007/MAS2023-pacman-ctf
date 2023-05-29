@@ -71,7 +71,7 @@
 GROUP 03\\
 \begin{tabular}{cccc}
 Shekhar Devm Upadhyay & Aiman Shenawa\\
-20010531 & 001021 \\
+20010531 & 20001021 \\
 sdup@kth.se & ashenawa@kth.se \\
 \includegraphics[width=0.2\linewidth]{side_profile.jpg} & 
 \includegraphics[width=0.17\linewidth]{Aiman_picture.jpg}
@@ -127,7 +127,7 @@ Multiple aspects of artificial intelligence will be explored in this report, suc
 \end{figure}
 
 % description of figure
-The figure shows the game environment, the blue and red dots represent the food pellets, the blue and red lines represent the walls. 
+Figure \ref{fig:drag_force} shows the game environment, the blue and red dots represent the food pellets, the blue and red lines represent the walls. 
 As seen in the figure above there are both Pacman and ghosts. The agent is a ghost when defending its own side. When crossing over to the enemy side to collect pellets it becomes a pacman.
 An agent can go into enemy territory and collect pellets, but the score will only increase when the agent returns back to its own side. In the figure there are also white pellets, 
 those are power pellets, when an agent collects a power pellet it can eat the enemy agents for a period of 40 moves. During that period the enemy ghost agents are regarded as scared.
@@ -396,11 +396,11 @@ As agreed upon between the groups, we ran the final games on maps  of size 32x32
     \hline
     \textbf{Seed} & \textbf{Group 1} & \textbf{Group 2} & \textbf{Group 3} & \textbf{Group 4} & \textbf{Group 5} & \textbf{Group 6} \\
     \hline
-    31 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    31 & win & loss & NA & tie & loss & loss \\
     \hline
-    489 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    89 & win & win & NA & tie & loss & winner \\
     \hline
-    89 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    489 & tie & tie & NA & loss & winner & loss \\
     \hline
     \textbf{Final Score} & 2 & 29 & 16 & 40 & 17 & 23 \\
     \hline
@@ -426,13 +426,20 @@ The overall winner of the tournament was Group 4, who had the best performing ag
 \label{subsec:improvements}
 In this section we will discuss the improvements that can be made to the suggested solution. 
 
-During the development of the solution, we noticed that the agents sometimes got stuck in local extrema of the value function. 
-For example, sometimes the agent sat next to a food particle and didn't eat it, until the enemy agent came closer and pushed it into scramble mode. 
+% During the development of the solution, we noticed that the agents sometimes got stuck in local extrema of the value function. 
+Duting the solutions's development, we noticed that the offensive agents sometimes got stuck in local extrema of the value function. For example, sometimes the agent sat next to a food particle and didn't eat it, until the enemy agent came closer and pushed it into scramble mode. 
 To avoid this, we added an increasing tendency to return to our own side for each time step in which the chosen action was to stay in the same place. 
 This helped the agent get out of local extrema in a couple of moves, in most cases. 
 However this is not a perfect solution, as we risk getting stuck in a position within a chokehold in the enemy territory. This roots to the heuristic design we have chosen and in order to improve upon this a in depth analysis of the different heuristics is required. \\
 
-In the finals we observed a peculiar behavior of the offensive agent, as the enemy ghost 
+In the finals we observed a peculiar behavior of the offensive agent; the enemy ghost was chasing our agent, but at 5 distances away, our agent moved in a loop following the exact same route multiple times. 
+This suggests that the heuristics should include a time variant factor in order to avoid loops.
+
+In the development of the role switching mechanism, we implemented it analysing the original map sizes from the pre-finals. 
+As a result of this we observe that there were times when our field was unprotected and the enemy agents could easily pass through. 
+This is when an offensive agent is killed and the role switching mechanism is triggered. At that point, the defensive agent becomes the offensive agent and starts advancing into the enemy territory.
+As a result of this behavior, the now defensive agent is offset from its optimal guarding position, as the agent was just respawned, and the result is our territory being unguarded. 
+The improvement our group suggest for this is to not trigger the switch until the respawned agent has had the time to move towards the middle of our half plane.
 
 
 
