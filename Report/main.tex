@@ -413,9 +413,6 @@ As agreed upon between the groups, we ran the final games on maps  of size 32x32
     \hline
     489 & tie & tie & NA & loss & win & loss \\
     \hline
-    \textbf{Final Score} & 2 & 29 & 16 & 40 & 17 & 23 \\
-    \hline
-
   \end{tabular}
   \caption{Performance of our agents against other groups in the final tournament}
   \label{tab:results_final}
@@ -424,6 +421,9 @@ As agreed upon between the groups, we ran the final games on maps  of size 32x32
 During the pre-final, our agents were reasonably good, but we still had some bugs that caused them to perform poorly in some situations. For example, sometimes our offensive agent thought it was better to sit next to a food pellet than to eat it. Sometimes, our defensive agent kept the enemy in sight without moving in for an obvious kill. At this point, our agents still had fixed roles (one attack and one defense), and did not switch roles based on the state of the game.
 
 Between the pre-final and final tournaments, we fixed the bugs in our agents, and also implemented the role switching mechanism described in Section \ref{subsec:heuristics}. This allowed our agents to switch roles based on the state of the game, and also to switch roles if one of the agents was killed. This improved the performance of our agents significantly in our testing. However, we overlooked something quite important - the size of the map on which we tested our ``Fluid'' Agents was much smaller than the size of the map on which the final tournament was run. This meant that our agents were not able to switch roles as seamlessly, often leaving gaps in our defense. This was compounded by the fact that our agents were not able to see the entire map, and hence could not plan their actions accordingly. This led to our agents performing poorly in the final tournament. We believe that if we had tested our agents on larger maps and spend some more time tuning the parameters, we would have been able to perform much better in the final tournament.
+
+
+Observing the results presented in Table \ref{tab:results_final}, we can see that our defence worked well against the best scoring groups. What we lacked in our solution was a good performing offence that could score against the other groups' defences as well as a robust role switching mechanism that is independent of map sizes.
 
 
 From Tables \ref{tab:results_prefinals} and \ref{tab:results_finals}, it is clear that the overall winner of the tournament was Group 4, who had the highest scores on both the pre-final and final tournaments. 
