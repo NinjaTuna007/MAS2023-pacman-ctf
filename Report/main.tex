@@ -97,7 +97,7 @@ sdup@kth.se & ashenawa@kth.se \\
 % why it is important to study
 
 % introduce pacman capture the flag problem
-This report presents a study on the development of AI agents for controlling a team of two in a competitive Pac-Man Capture the Flag (CTF) scenario. The objective of the agents is to maximize their score by efficiently collecting food from the enemy turf within a limited number of moves. This report studies various approaches used in the field of artificial intelligence, including minimax game tree search, modifications like alpha-beta pruning and move ordering, Monte Carlo Tree Search (MCTS), Expectimax, and decision-tree-based approaches, presents the final solution employed by the authors, and does a comparative analysis of the approaches utilized by all the teams in the competition \todo{is this sentence too long?}. By analyzing and comparing these strategies, we aim to identify effective techniques for AI-controlled agents in Pac-Man CTF.
+This report presents a study on the development of AI agents for controlling a team of two in a competitive Pac-Man Capture the Flag (CTF) scenario. The objective of the agents is to maximize their score by efficiently collecting food from the enemy turf within a limited number of moves. This report studies various approaches used in the field of artificial intelligence, including minimax game tree search, modifications like alpha-beta pruning and move ordering, Monte Carlo Tree Search (MCTS), Expectimax, and decision-tree-based approaches. Then, it goes on to present the final solution employed by the authors, and does a comparative analysis of the approaches utilized by all the teams in the competition. By analyzing and comparing these strategies, we aim to identify effective techniques for AI-controlled agents in Pac-Man CTF.
 
 \end{abstract}
 \clearpage
@@ -142,7 +142,7 @@ The information each agent has access to is the following:
   \item The total score
   \item The position of all the food pellets on the map, this is updated every time an agent moves
   \item The position of all the power pellets on the map, this is updated every time an agent moves
-  \item The position of an enemy agent if it is within 5 squares of the agent or a teammate \todo{is it 5 squares or 5 manhattan distances?}
+  \item The position of an enemy agent if it is within Manhattan distance of 5 from us or a friendly agent.
 \end{itemize}
 
 
@@ -154,10 +154,7 @@ The information each agent has access to is the following:
 
 This report will discuss the problem of developing an agent that can play the game of Pacman capture the flag. 
 The aim is to develop two agents which are able to defend their side of the map and also collect food pellets from the enemy side. 
-The agents will be able to move in four directions, up, down, left and right.  \todo{mention that not moving is also an option?}
-
-
-
+The agents will be able to move in four directions, up, down, left and right. It is also possible to stay in the same position and not move, although this is only sometimes strategically beneficial.
 
 These problems and their solutions are addressed in further detail in the following section \ref{rel_work}.
 
@@ -269,7 +266,7 @@ Typical Minimax approaches require that the entire game state be observable to u
 \subsection{Heuristics}
 \label{subsec:heuristics}
 
-We started off by having separate classes for offensive and defensive agents, each with a different heuristic. Later, we merged the two classes into a single class, and used a attribute called \texttt{mode} to determine if the behavior should be defensive or offensive, based on current agent position, position of our teammate, positions of any visible enemies, etc. \todo{should we write "etc" ?}
+We started off by having separate classes for offensive and defensive agents, each with a different heuristic. Later, we merged the two classes into a single class, and used a attribute called \texttt{mode} to determine if the behavior should be defensive or offensive, based on current agent position, position of our teammate, positions of any visible enemies, and other relevant factors affecting the game state.
 
 \subsection{Offensive Heuristics}
 \label{subsec:offensive_heuristics}
@@ -422,24 +419,16 @@ Observing the results presented in Table \ref{tab:results_final}, we can see tha
 
 
 From Tables \ref{tab:results_prefinals} and \ref{tab:results_finals}, it is clear that the overall winner of the tournament was Group 4, who had the highest scores on both the pre-final and final tournaments. 
-There was an issue where they took about 4 minutes to initialize their agents instead of the agreed 15 seconds \todo{mention that this is on our computers}, and could thus be disqualified, but we agreed to let them participate in the tournament anyway. 
+There was an issue where they took about 4 minutes on most teams' machines to initialize their agents instead of the agreed 15 seconds, and could thus be disqualified, but we agreed to let them participate in the tournament anyway. Even on their own computers, their code took about 2 minutes to initialize; the reason was that they had tuned their algorithm to use about 15 seconds for a smaller (16 $\times$ 16) map, but a larger map meant that their algorithm took much longer to initialize.
+
 Their approach relies heavily on a Monte-Carlo Tree Search, coupled with a heuristic function to evaluate the value of a game state instead of using rollouts to the end of the game. 
-They also had a very good estimator that allowed them to ``guess'' where the enemy agents could be, and act accordingly. 
-This allowed them to perform very well in the tournament.
+They also had a very good estimator that allowed them to ``guess'' where the enemy agents could be, and act accordingly. This allowed them to perform very well in the tournament.
 
 Group 2 came in second place, with both the offensive and defensive behaviors being based on a simple Decision Tree based approach. They had one defensive agent and one offensive agent, with no role switching mechanism. They also estimated the current position of the enemy agents, based on an HMM model. This gave them good intelligence on the enemy agents, and allowed them to perform well in the tournament.
 
 Group 6 also had an interesting approach - their defensive behavior was based on a simple Decision Tree based approach, while the offensive behavior used a minimax implementation quite like our own. They had a much better role-switching mechanism than ours: when they had a lead of more than 10 points, both their agents would switch to defense. If their defense was scared, they would switch to offense and focus on eating food pellets, since they could anyways not defend their own food pellets at that point. Similarly, if both enemy agents were scared, both their agents would switch to offense and try to eat the enemy food pellets. This allowed them to perform quite well in the tournament, and secured them the third place.
 
-
-% Containing the results of other groups in a table, 
-
-
-
-
-
-
-
+Group 1 had an approach based on Reinforcement Learning. Though it was expected that such approaches could be competitive, their performance in the tournament was not as good as expected. This could be because there was no way to train their agents on the actual tournament map, and they had to train their agents on a smaller map. There was also the problem of the agents not being able to see the entire map, which led to hurdles in the training pipeline. They concluded that RL was not a good approach for this problem.
 
 \section{Summary and Conclusions}
 \label{sec:conclusion}
