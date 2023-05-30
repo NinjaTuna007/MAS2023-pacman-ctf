@@ -21,6 +21,7 @@
 \usepackage{xcolor}
 \usepackage{arydshln}
 \usepackage{tikz}
+\usepackage{todonotes}
 
 \usetikzlibrary{shapes.geometric, arrows}
 
@@ -96,7 +97,7 @@ sdup@kth.se & ashenawa@kth.se \\
 % why it is important to study
 
 % introduce pacman capture the flag problem
-This report presents a study on the development of AI agents for controlling a team of two in a competitive Pac-Man Capture the Flag (CTF) scenario. The objective of the agents is to maximize their score by efficiently collecting food from the enemy turf within a limited number of moves. This report studies various approaches used in the field of artificial intelligence, including minimax game tree search, modifications like alpha-beta pruning and move ordering, Monte Carlo Tree Search (MCTS), Expectimax, and decision-tree-based approaches, presents the final solution employed by the authors, and does a comparative analysis of the approaches utilized by all the teams in the competition. By analyzing and comparing these strategies, we aim to identify effective techniques for AI-controlled agents in Pac-Man CTF.
+This report presents a study on the development of AI agents for controlling a team of two in a competitive Pac-Man Capture the Flag (CTF) scenario. The objective of the agents is to maximize their score by efficiently collecting food from the enemy turf within a limited number of moves. This report studies various approaches used in the field of artificial intelligence, including minimax game tree search, modifications like alpha-beta pruning and move ordering, Monte Carlo Tree Search (MCTS), Expectimax, and decision-tree-based approaches, presents the final solution employed by the authors, and does a comparative analysis of the approaches utilized by all the teams in the competition \todo{is this sentence too long?}. By analyzing and comparing these strategies, we aim to identify effective techniques for AI-controlled agents in Pac-Man CTF.
 
 \end{abstract}
 \clearpage
@@ -127,21 +128,21 @@ Multiple aspects of artificial intelligence will be explored in this report, suc
 \end{figure}
 
 % description of figure
-Figure \ref{fig:drag_force} shows the game environment, the blue and red dots represent the food pellets, the blue and red lines represent the walls. 
+Figure \ref{fig:drag_force} shows the game environment. The maze structure can be changes by specifying random seeds. The blue and red dots represent the food pellets, the blue and red lines represent the walls. 
 As seen in the figure above there are both Pacman and ghosts. The agent is a ghost when defending its own side. When crossing over to the enemy side to collect pellets it becomes a pacman.
 An agent can go into enemy territory and collect pellets, but the score will only increase when the agent returns back to its own side. In the figure there are also white pellets, 
 those are power pellets, when an agent collects a power pellet it can eat the enemy agents for a period of 40 moves. During that period the enemy ghost agents are regarded as scared.
 When an agent is eaten it respawns at its own side, if the agent was scared before getting eaten it will no longer be scared after respawning.
 The game ends when all but two food pellets have been eaten, or when the time limit of 1200 moves has been reached. The team with the highest score wins the game.
-There is a limit on calculation time, 15 seconds for initialization and 1 second for each move. If the agent exceeds the time limit three times duting a game the team will forfeit the game.
+There is a limit on calculation time, 15 seconds for initialization and 1 second for each move. If the agent exceeds the time limit three times during a game the team will forfeit the game.
 
 The information each agent has access to is the following:
 \begin{itemize}
-  \item The friend agent's positions
+  \item The friendly agent's positions
   \item The total score
   \item The position of all the food pellets on the map, this is updated every time an agent moves
   \item The position of all the power pellets on the map, this is updated every time an agent moves
-  \item The position of an enemy agent if it is within 5 squares of the agent or a teammate
+  \item The position of an enemy agent if it is within 5 squares of the agent or a teammate \todo{is it 5 squares or 5 manhattan distances?}
 \end{itemize}
 
 
@@ -153,7 +154,7 @@ The information each agent has access to is the following:
 
 This report will discuss the problem of developing an agent that can play the game of Pacman capture the flag. 
 The aim is to develop two agents which are able to defend their side of the map and also collect food pellets from the enemy side. 
-The agents will be able to move in four directions, up, down, left and right. 
+The agents will be able to move in four directions, up, down, left and right.  \todo{mention that not moving is also an option?}
 
 
 
@@ -181,7 +182,7 @@ Applications include multi-robot system coordination, autonomous vehicles, and u
 
 \subsection{Outline}
 This report is organized as follows. First we introduce the problem and its importance in Section \ref{sec:introduction}. Then we discuss and highlight the related work and required backround knowledge in order to understand the proposed solution in Section \ref{rel_work}. This is followed by a detailed description of the proposed solution in Section \ref{method}. Next, we present the experimental setup and the results in Section \ref{sec:experiments_and_results}.
-Finally, we summarize the results and conclude the report in Section \ref{sec:conclusion}.
+We summarize the results and conclude the report in Section \ref{sec:conclusion}. Lastly, we present improvements that can be made to the suggested solution in Section \ref{subsec:Future work}.
 
 
 
@@ -237,6 +238,7 @@ Sometimes, however, it is not feasible to search the entire game tree, due to th
 \label{subsec:expectimax}
 Expectimax is a variant of the minimax algorithm that considers uncertain outcomes in games. It is commonly used in domains with probabilistic elements. In Pac-Man CTF, Expectimax can be employed to account for the ghost movement and uncertain states, enabling agents to make rational decisions under uncertainty \cite{RIVEST198777}.
 
+
 \subsection{Monte Carlo Tree Search}
 \label{subsec:mcts}
 MCTS is a sampling-based search algorithm that has demonstrated remarkable success in various game-playing domains. By combining tree exploration with random rollouts, MCTS performs effective exploration and exploitation of the search space. This approach has been applied to Pac-Man CTF, where agents simulate multiple playouts to estimate the value of different actions and make informed decisions \cite{GELLY20111856}.
@@ -267,11 +269,11 @@ Typical Minimax approaches require that the entire game state be observable to u
 \subsection{Heuristics}
 \label{subsec:heuristics}
 
-We started off by having separate classes for offensive and defensive agents, each with a different heuristic. Later, we merged the two classes into a single class, and used a attribute called \texttt{mode} to determine if the behavior should be defensive or offensive, based on current agent position, position of our teammate, positions of any visible enemies, etc.
+We started off by having separate classes for offensive and defensive agents, each with a different heuristic. Later, we merged the two classes into a single class, and used a attribute called \texttt{mode} to determine if the behavior should be defensive or offensive, based on current agent position, position of our teammate, positions of any visible enemies, etc. \todo{should we write "etc" ?}
 
 \subsection{Offensive Heuristics}
 \label{subsec:offensive_heuristics}
-When in ``offensive'' mode, our agent tries to cross over to the other side of the map as quickly as possible, then actively looks for food pellets to capture. We prioritize closer food (without disregarding the rest), de-value food inside dead-end paths (paths that can be choked off at a single point by the enemy) pick up power pills when possible and when enemy agents are closeby. As the food in our pocket increases, we have an increasing tendency to return to our side of the map to deposit the food. We also try to avoid enemy agents when possible, and try to eat them when they are scared. Being chased by an unscared enemy also ``turns off'' the tendency to chase food, and we try to run away from the enemy instead. We also try to avoid getting trapped in dead-end paths, and try to avoid getting cornered by enemy agents. After depositing the food, we start this process again.
+When in ``offensive'' mode, our agent tries to cross over to the other side of the map as quickly as possible, then actively looks for food pellets to capture. We prioritize closer food (without disregarding the rest), de-value food inside dead-end paths (paths that can be choked off at a single point by the enemy) pick up power pills when possible and when enemy agents are closeby. As the food in our pocket increases, we have an increasing tendency to return to our side of the map to deposit the food. We also try to avoid enemy agents when possible and try to eat them when they are scared. Being chased by an unscared enemy also ``turns off'' the tendency to chase food, and we try to run away from the enemy instead. We also try to avoid getting trapped in dead-end paths, and try to avoid getting cornered by enemy agents. After depositing the food, we start this process again.
 
 We noticed that the offensive agents sometimes got stuck in local extrema of the value function. For example, sometimes the agent sat next to a food particle and didn't eat it, until the enemy agent came closer and pushed it into scramble mode. To avoid this, we added an increasing tendency to return to our own side for each time step in which the chosen action was to stay in the same place. This helped the agent get out of local extrema in a couple of moves, in most cases.
 
@@ -402,9 +404,9 @@ As agreed upon between the groups, we ran the final games on maps  of size 32x32
     \hline
     31 & win & loss & NA & tie & loss & loss \\
     \hline
-    89 & win & win & NA & tie & loss & winner \\
+    89 & win & win & NA & tie & loss & win \\
     \hline
-    489 & tie & tie & NA & loss & winner & loss \\
+    489 & tie & tie & NA & loss & win & loss \\
     \hline
     \textbf{Final Score} & 2 & 29 & 16 & 40 & 17 & 23 \\
     \hline
@@ -420,7 +422,7 @@ Between the pre-final and final tournaments, we fixed the bugs in our agents, an
 
 
 From Tables \ref{tab:results_prefinals} and \ref{tab:results_finals}, it is clear that the overall winner of the tournament was Group 4, who had the highest scores on both the pre-final and final tournaments. 
-There was an issue where they took about 4 minutes to initialize their agents instead of the agreed 15 seconds, and could thus be disqualified, but we agreed to let them participate in the tournament anyway. 
+There was an issue where they took about 4 minutes to initialize their agents instead of the agreed 15 seconds \todo{mention that this is on our computers}, and could thus be disqualified, but we agreed to let them participate in the tournament anyway. 
 Their approach relies heavily on a Monte-Carlo Tree Search, coupled with a heuristic function to evaluate the value of a game state instead of using rollouts to the end of the game. 
 They also had a very good estimator that allowed them to ``guess'' where the enemy agents could be, and act accordingly. 
 This allowed them to perform very well in the tournament.
@@ -446,7 +448,7 @@ The purpose of this project was to develop an agent capable of playing the game 
 We explored various methods, including minimax game tree search, Monte Carlo Tree Search (MCTS), Expectimax, and decision-tree-based approaches. 
 The final solution included a modified Minimax, alpha-beta pruning. This, in combination with the heuristics, allowed our agents to perform reasonably well.
 The modified Minimax was implemented by considering the possible actions of the agent we are controlling (as the maximizing player), and when our agent saw an enemy agent, we considered the possible actions of the enemy agent as well (as the minimizing player).
-Further, we also implementedrole switching between the agents, which allowed them to switch roles based on the state of the game, and also to switch roles if one of the agents was killed.
+Further, we also implemented role switching between the agents, which allowed them to switch roles based on the state of the game, and also to switch roles if one of the agents was killed.
 
 During the pre-final stage, the agents showed good performance, but we still had some bugs that caused them to perform poorly in some situations. 
 A bug that affected our performance greatly was that sometimes our offensive agent thought it was better to sit next to a food pellet than to eat it.
@@ -475,23 +477,22 @@ Despite improvements made to the agents, the agents' performance suffered in the
 
 \section{Future Work}
 % \subsection{Improvements}
-% \label{subsec:improvements}
+\label{subsec:Future work}
+% In this section we will discuss the improvements that can be made to the suggested solution. 
 In this section we will discuss the improvements that can be made to the suggested solution. 
+These improvements are based on the observations made during the development of the solution and during the finals as well as changes the group would have made if more time was available.
 
 % During the development of the solution, we noticed that the agents sometimes got stuck in local extrema of the value function. 
 During the development of the solution, we observed that the offensive agents occasionally became trapped in local extrema of the value function. For instance, they would sit next to a food particle without consuming it until an enemy agent approached, forcing them into scramble mode.
 To avoid this, we added an increasing tendency to return to our own side for each time step in which the chosen action was to stay in the same place. 
 This helped the agent get out of local extrema in a couple of moves, in most cases. 
-However this is not a perfect solution, as we risk getting stuck in a position within a chokehold in the enemy territory. This roots to the heuristic design we have chosen and in order to improve upon this a in depth analysis of the different heuristics is required. \\
+However this is not a perfect solution, as we risk getting stuck in a position within a chokehold in the enemy territory. This roots to the heuristic design we have chosen and in order to improve upon this a in depth analysis of the different heuristics is required.
 
-In the finals we observed a peculiar behavior of the offensive agent; the enemy ghost was chasing our agent, but at 5 distances away, our agent moved in a loop following the exact same route multiple times. 
-This suggests that the heuristics should include a time variant factor in order to avoid loops.
+In the finals we observed a peculiar behavior of the offensive agent; the enemy ghost was chasing our agent, but at 5 distances away, our agent moved in a loop following the exact same route multiple times. This suggests that the heuristics should include a time variant factor in order to avoid loops.
 
 In the development of the role switching mechanism, we implemented it analysing the original map sizes from the pre-finals. 
 As a result of this we observe that there were times when our field was unprotected and the enemy agents could easily pass through. 
-This is when an offensive agent is killed and the role switching mechanism is triggered. At that point, the defensive agent becomes the offensive agent and starts advancing into the enemy territory.
-As a result of this behavior, the now defensive agent is offset from its optimal guarding position, as the agent was just respawned, and the result is our territory being unguarded. 
-The improvement our group suggest for this is to not trigger the switch until the respawned agent has had the time to move towards the middle of our half plane.
+This is when an offensive agent is killed and the role switching mechanism is triggered. At that point, the defensive agent becomes the offensive agent and starts advancing into the enemy territory. As a result of this behavior, the now defensive agent is offset from its optimal guarding position, as the agent was just respawned, and the result is our territory being unguarded. The improvement our group suggest for this is to not trigger the switch until the respawned agent has had the time to move towards the middle of our half plane.
 
 
 
@@ -503,12 +504,12 @@ The improvement our group suggest for this is to not trigger the switch until th
 % \clearpage
 % \newpage
 \printbibliography
-\newpage
+% \newpage
 
-\appendix
-% print the appendix title on the top of the page
-\section{Appendix}
-\label{sec:appendix}
+% \appendix
+% % print the appendix title on the top of the page
+% \section{Appendix}
+% \label{sec:appendix}
 
 
 
