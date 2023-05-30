@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2023.3.25)  30 MAY 2023 14:12
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2023.3.25)  30 MAY 2023 14:39
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1081,8 +1081,8 @@ Package pdftex.def Info: ./figuresA4/pacman_illustration.png  used on input line
 
  <./figuresA4/pacman_illustration.png>] [3]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 210.
- [4]
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 269.
+ [4] [5]
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 277.
  (/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 )
@@ -1090,7 +1090,7 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `cmtt' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
- [5] [6] [7] [8] [9] [10] [11] (./main.aux)
+ [6] [7] [8] [9] [10] [11] (./main.aux)
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 24D3E392DAAD97A5A49A7F108FDB8C1C;2897.
 Package logreq Info: Writing requests to 'main.run.xml'.
@@ -1100,13 +1100,13 @@ Package logreq Info: Writing requests to 'main.run.xml'.
 Here is how much of TeX's memory you used:
  36565 strings out of 478287
  692279 string characters out of 5849289
- 1423653 words of memory out of 5000000
+ 1424654 words of memory out of 5000000
  53986 multiletter control sequences out of 15000+600000
  493502 words of font info for 160 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  84i,18n,80p,1256b,1731s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-t1.enc}{/usr/share/texmf/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1095.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1200.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1440.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1728.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfcc1200.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1000.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1095.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1440.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm2074.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfti1200.pfb></usr/share/texmf/fonts/type1/public/cm-super/sftt1200.pfb>
-Output written on main.pdf (11 pages, 791338 bytes).
+Output written on main.pdf (11 pages, 793058 bytes).
 PDF statistics:
  282 PDF objects out of 1000 (max. 8388607)
  231 compressed objects within 3 object streams

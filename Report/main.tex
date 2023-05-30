@@ -233,17 +233,25 @@ Sometimes, however, it is not feasible to search the entire game tree, due to th
 
 \subsection{Expectimax}
 \label{subsec:expectimax}
-Expectimax is a variant of the minimax algorithm that considers uncertain outcomes in games. It is commonly used in domains with probabilistic elements. In Pac-Man CTF, Expectimax can be employed to account for the ghost movement and uncertain states, enabling agents to make rational decisions under uncertainty \cite{RIVEST198777}.
 
+Expectimax is a variant of the minimax algorithm that considers uncertain outcomes in games. It is commonly used in domains with probabilistic elements. The utility of a state with uncertain actions is the weighted average of the utilities of the possible outcomes, where the weights are the probabilities of the outcomes. For instance, one could assume that the opponent moves randomly, and compute the expected utility of each action. Building on this, expectimax tries to maximize the expected utility of the maximizing player. In Pac-Man CTF, Expectimax can be employed to account for uncertain states and not knowing what moves the enemy could make, enabling agents to make rational decisions under uncertainty \cite{RIVEST198777}.
 
 \subsection{Monte Carlo Tree Search}
 \label{subsec:mcts}
-MCTS is a sampling-based search algorithm that has demonstrated remarkable success in various game-playing domains. By combining tree exploration with random rollouts, MCTS performs effective exploration and exploitation of the search space. This approach has been applied to Pac-Man CTF, where agents simulate multiple playouts to estimate the value of different actions and make informed decisions \cite{GELLY20111856}.
+
+Monte Carlo Tree Search (MCTS) is a sampling-based search algorithm that has demonstrated remarkable success in various game-playing domains. In particular, the approach gained significant popularity due to its success in various board games, such as Go, Chess, and Shogi \cite{GELLY20111856}. MCTS combines random simulations and tree search to make informed decisions. Unlike traditional search algorithms like Minimax, MCTS does not rely on an explicit evaluation function or an exhaustive exploration of the game tree.
+
+In MCTS, the algorithm builds a search tree incrementally by performing a series of simulations. Each simulation consists of four main steps: selection, expansion, simulation, and backpropagation. During the selection step, the algorithm traverses the tree from the root node to a leaf node, employing a policy to decide which child node to explore next. The expansion step adds one or more child nodes to the tree. The simulation step plays out the game from the expanded node using random moves until a terminal state is reached. Finally, during the backpropagation step, the results of the simulated game are propagated back up the tree, updating the statistics of the visited nodes. This approach has been applied to Pac-Man CTF by Group 4, where agents simulate multiple playouts with heuristics to estimate the value of different actions and make informed decisions.
 
 
 \subsection{Decision Tree Based Approaches}
 \label{subsec:decision_tree}
-Decision trees offer a structured representation of decision-making processes. By learning from historical data and constructing decision rules, decision-tree-based approaches provide an interpretable framework for agent behavior. These techniques have been explored in Pac-Man CTF, where agents use decision trees to guide their actions based on various game state features \cite{Hastie2009}.
+
+Decision trees provide a structured representation of decision-making processes, offering interpretable and rule-based frameworks for agent behavior. These techniques have been extensively explored in various domains, including classification, regression, and data mining. In recent years, researchers have begun to investigate the potential of decision trees in the context of turn-based games, recognizing their ability to capture complex game dynamics and facilitate agent decision-making \cite{Hastie2009}.
+
+One of the primary advantages of decision-tree-based approaches is their interpretability. The resulting decision rules are often intuitive and understandable, allowing humans to gain insights into the decision-making process. This interpretability is particularly valuable in turn-based games, where strategic decision-making and planning play a crucial role. By examining the decision tree, players and developers can gain a clear understanding of the agent's behavior and identify areas for improvement or adjustment.
+
+In the context of Pacman CTF, we have seen Group 2 use such an approach to great success, establishing the effectiveness of decision trees in this domain. 
 
 
 \section{Method}
