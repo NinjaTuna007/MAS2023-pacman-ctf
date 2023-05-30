@@ -479,7 +479,7 @@ Despite improvements made to the agents, the agents' performance suffered in the
 In this section we will discuss the improvements that can be made to the suggested solution. 
 
 % During the development of the solution, we noticed that the agents sometimes got stuck in local extrema of the value function. 
-Duting the solutions's development, we noticed that the offensive agents sometimes got stuck in local extrema of the value function. For example, sometimes the agent sat next to a food particle and didn't eat it, until the enemy agent came closer and pushed it into scramble mode. 
+During the development of the solution, we observed that the offensive agents occasionally became trapped in local extrema of the value function. For instance, they would sit next to a food particle without consuming it until an enemy agent approached, forcing them into scramble mode.
 To avoid this, we added an increasing tendency to return to our own side for each time step in which the chosen action was to stay in the same place. 
 This helped the agent get out of local extrema in a couple of moves, in most cases. 
 However this is not a perfect solution, as we risk getting stuck in a position within a chokehold in the enemy territory. This roots to the heuristic design we have chosen and in order to improve upon this a in depth analysis of the different heuristics is required. \\
