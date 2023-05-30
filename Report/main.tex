@@ -292,7 +292,7 @@ The exact details of our implementation can be found in our Github Repository an
 \section{Experiments and Results}
 \label{sec:experiments_and_results}
 
-First, we will describe the experimental setup for the Pacman CTF game, and then we will present the results of our experiments. We will also discuss the merits and shortcomings of our solution, and compare it with the solutions of other groups.
+First, we will describe the experimental setup for the Pacman CTF game, and describe the process of running the experiments based on the rules agreed upon by all teams. Then, we will discuss the results of the experiments, and compare our solution to the other solutions proposed by the other teams.
 
 \subsection{Experimental Setup}
 \label{subsec:experimental_setup}
@@ -301,14 +301,12 @@ We ran our experiments on the UC Berkeley Pacman Capture the Flag project. We us
 
 All teams agreed on specific map sizes, seeds, and number of agents per team for the pre-final and final tournaments. We also agreed on a maximum compute time for each move, to ensure that the games would finish in a reasonable amount of time. One of the drawbacks of this approach is that different machines may be able to process different amounts of the game tree in the given time, and hence the results may not be completely fair. However, we believe that this is a reasonable trade-off, since it is not possible to ensure that all machines are equally powerful. We did not explicitly penalize teams for exceeding the time limit, relying on the honor system instead. There was a similar limit on the amount of time that a team could take upon initialization, to ensure that the games would start in a reasonable amount of time. We ran into situations where some teams still took a much longer time to initialize, leading to delays in the start of the game. We have not explicitly penalized teams for this, but we believe that this is something that should be taken into account in future tournaments.
 
-\subsubsection{Experimental setup for measurement of performance}
+\subsection{Measurement of performance}
 In order to evaluate the performance of the suggested solution, we will compare our approach with five other groups. 
 This is done by putting the algorithms against each other in the simulation. 
 Two different evaluations will be done, one called pre-finals, in which the groups give their initial solutions, and one called finals, in which after having time to re-evaluate their solutions, the groups give their final solutions.
 The results of both evaluations are presented in the tables below.
 Results are measured in terms of wins, ties, losses. The score is calculated as the following: 3 points for a win, 1 point for a tie, and 0 points for a loss. The total score is the sum of the points for each group.
-
-
 
 
 \subsection{Results}
@@ -371,11 +369,6 @@ In this section, we summarize the results of our experiments. First we present t
   \label{tab:results_finals}
 \end{table}
 
-
-
-
-
-
 As agreed upon between the groups, we ran the final games on maps  of size 32x32, with 2 agents on each team, with varying seeds determining the map layout. We ran one game against each group for each seed, and recorded the results in Table \ref{tab:results_finals}. In contrast, the pre-final tournament was run on maps of size 16x16. The results of the pre-final tournament are shown in Table \ref{tab:results_prefinals}. In both cases, to compute the final scores, we gave 3 points for a win, 1 point for a tie, and 0 points for a loss.
 
 
@@ -422,9 +415,11 @@ During the pre-final, our agents were reasonably good, but we still had some bug
 
 Between the pre-final and final tournaments, we fixed the bugs in our agents, and also implemented the role switching mechanism described in Section \ref{subsec:heuristics}. This allowed our agents to switch roles based on the state of the game, and also to switch roles if one of the agents was killed. This improved the performance of our agents significantly in our testing. However, we overlooked something quite important - the size of the map on which we tested our ``Fluid'' Agents was much smaller than the size of the map on which the final tournament was run. This meant that our agents were not able to switch roles as seamlessly, often leaving gaps in our defense. This was compounded by the fact that our agents were not able to see the entire map, and hence could not plan their actions accordingly. This led to our agents performing poorly in the final tournament. We believe that if we had tested our agents on larger maps and spend some more time tuning the parameters, we would have been able to perform much better in the final tournament.
 
-
 Observing the results presented in Table \ref{tab:results_final}, we can see that our defence worked well against the best scoring groups. What we lacked in our solution was a good performing offence that could score against the other groups' defences as well as a robust role switching mechanism that is independent of map sizes.
 
+
+\subsection{Discussion}
+\label{subsec:discussion}
 
 From Tables \ref{tab:results_prefinals} and \ref{tab:results_finals}, it is clear that the overall winner of the tournament was Group 4, who had the highest scores on both the pre-final and final tournaments. 
 There was an issue where they took about 4 minutes on most teams' machines to initialize their agents instead of the agreed 15 seconds, and could thus be disqualified, but we agreed to let them participate in the tournament anyway. Even on their own computers, their code took about 2 minutes to initialize; the reason was that they had tuned their algorithm to use about 15 seconds for a smaller (16 $\times$ 16) map, but a larger map meant that their algorithm took much longer to initialize.
